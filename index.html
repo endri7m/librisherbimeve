@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libri Dixhital i Shërbimeve - Antigravity IDE</title>
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDKs (Gati për sinkronizim) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- Supabase Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Sidebar Navigimi -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon">🔧</div>
+      <div class="logo-text">Libri Shërbimeve</div>
+    </div>
+    
+    <nav>
+      <ul class="nav-links">
+        <li class="nav-item active" data-view="dashboard">
+          <a href="#">
+            <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
+            <span>Paneli</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="customers">
+          <a href="#">
+            <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <span>Klientët</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="vehicles">
+          <a href="#">
+            <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+            <span>Automjetet</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="history">
+          <a href="#">
+            <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Historiku i Servisit</span>
+          </a>
+        </li>
+        
+        <li class="nav-divider"></li>
+        
+        <li class="nav-item sidebar-bottom" data-view="settings">
+          <a href="#">
+            <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Cilësimet</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Përmbajtja Kryesore -->
+  <main class="main-content">
+    
+    <!-- Top Bar me titull dhe kërkim global -->
+    <header class="header-bar">
+      <div class="page-title">
+        <h1 id="view-title">Paneli</h1>
+        <p id="view-subtitle-text">Menaxhimi i përgjithshëm i servisit</p>
+      </div>
+      
+      <div class="search-container">
+        <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" class="search-input" id="global-search" placeholder="Kërko targë, klient, telefon...">
+        <!-- Rezultatet e kërkimit -->
+        <div class="search-results" id="search-results-dropdown"></div>
+      </div>
+    </header>
+
+    <!-- VIEWS -->
+    
+    <!-- 1. VIEW: DASHBOARD -->
+    <section class="view-section" id="view-dashboard-section">
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Klientë</span>
+            <span class="stat-value" id="stats-customers">0</span>
+          </div>
+          <div class="stat-icon">👤</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Automjete</span>
+            <span class="stat-value" id="stats-vehicles">0</span>
+          </div>
+          <div class="stat-icon">🚗</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Shërbime</span>
+            <span class="stat-value" id="stats-services">0</span>
+          </div>
+          <div class="stat-icon">🔧</div>
+        </div>
+      </div>
+      
+      <div class="actions-panel">
+        <h3 class="actions-title">Veprime të shpejta</h3>
+        <div class="actions-buttons">
+          <button class="btn btn-primary" id="btn-quick-add-customer">+ Shto klient</button>
+          <button class="btn btn-primary" id="btn-quick-add-vehicle">+ Shto automjet</button>
+          <button class="btn btn-warning" id="btn-quick-add-service">+ Regjistro shërbim</button>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Shërbimet e fundit në servis</h3>
+        </div>
+        <div class="table-responsive">
+          <table id="table-recent-services">
+            <thead>
+              <tr>
+                <th>Automjeti</th>
+                <th>Targa</th>
+                <th>Klienti</th>
+                <th>Data</th>
+                <th>Kilometrazhi</th>
+                <th>Shërbimi</th>
+                <th>Kostoja</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Popullohet nga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. VIEW: CUSTOMERS -->
+    <section class="view-section" id="view-customers-section" style="display: none;">
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Lista e Klientëve</h3>
+          <button class="btn btn-primary btn-sm" id="btn-add-customer">+ Shto klient</button>
+        </div>
+        <div class="table-responsive">
+          <table id="table-customers">
+            <thead>
+              <tr>
+                <th>Emri dhe Mbiemri</th>
+                <th>Telefoni</th>
+                <th>Email</th>
+                <th>Adresa</th>
+                <th>Automjete</th>
+                <th>Data e Regjistrimit</th>
+                <th>Shënime</th>
+                <th>Veprime</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Popullohet nga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. VIEW: VEHICLES -->
+    <section class="view-section" id="view-vehicles-section" style="display: none;">
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Lista e Automjeteve</h3>
+          <button class="btn btn-primary" id="btn-add-vehicle">+ Shto automjet</button>
+        </div>
+        <div class="table-responsive">
+          <table id="table-vehicles">
+            <thead>
+              <tr>
+                <th>Targa</th>
+                <th>Marka / Modeli</th>
+                <th>Viti</th>
+                <th>Pronari</th>
+                <th>Kilometrazhi aktual</th>
+                <th>Karburanti / Kambio</th>
+                <th>Veprime</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Popullohet nga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. VIEW: VEHICLE PROFILE -->
+    <section class="view-section" id="view-vehicle-profile-section" style="display: none;">
+      <div class="profile-grid">
+        <!-- Sidebar Informacioni i Automjetit -->
+        <div class="profile-card">
+          <div class="profile-header">
+            <div class="profile-icon">🚗</div>
+            <h2 class="profile-title" id="prof-make-model">BMW 320d</h2>
+            <div class="profile-plate-badge" id="prof-plate">AB 123 CD</div>
+          </div>
+          
+          <div class="profile-info-list">
+            <div class="profile-info-item">
+              <span class="profile-info-label">Pronari</span>
+              <span class="profile-info-value" id="prof-owner">Endri Hasa</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Viti</span>
+              <span class="profile-info-value" id="prof-year">2018</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Kilometrazhi</span>
+              <span class="profile-info-value" id="prof-mileage">186,420 km</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Motori</span>
+              <span class="profile-info-value" id="prof-engine">2.0L</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Karburanti</span>
+              <span class="profile-info-value" id="prof-fuel">Naftë</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Kambio</span>
+              <span class="profile-info-value" id="prof-trans">Automatike</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">Ngjyra</span>
+              <span class="profile-info-value" id="prof-color">E zezë</span>
+            </div>
+            <div class="profile-info-item">
+              <span class="profile-info-label">VIN (Shasia)</span>
+              <span class="profile-info-value" id="prof-vin">-</span>
+            </div>
+            <div class="profile-info-item" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+              <span class="profile-info-label">Shënime</span>
+              <span class="profile-info-value" id="prof-notes" style="text-align: left; font-weight: normal; font-size: 0.85rem; color: var(--text-muted);">-</span>
+            </div>
+          </div>
+          
+          <div class="profile-actions">
+            <button class="btn btn-warning" id="btn-profile-add-service" style="margin-bottom: 0.5rem; width: 100%;">+ Regjistro shërbim</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <button class="btn btn-secondary btn-sm" id="btn-profile-edit-vehicle">Ndrysho</button>
+              <button class="btn btn-danger btn-sm" id="btn-profile-delete-vehicle">Fshi</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linja Kohore e Shërbimeve -->
+        <div>
+          <h3 style="margin-bottom: 1.5rem; font-weight: 700; color: var(--primary);">Historiku i Servisit</h3>
+          <div class="timeline" id="vehicle-timeline">
+            <!-- Popullohet nga JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. VIEW: ALL SERVICE HISTORY -->
+    <section class="view-section" id="view-history-section" style="display: none;">
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Të gjitha Shërbimet e Regjistruara</h3>
+        </div>
+        <div class="table-responsive">
+          <table id="table-all-services">
+            <thead>
+              <tr>
+                <th>Automjeti</th>
+                <th>Targa</th>
+                <th>Data</th>
+                <th>Kilometrazhi</th>
+                <th>Llojet e Shërbimit</th>
+                <th>Përshkrimi</th>
+                <th>Kostoja</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Popullohet nga JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. VIEW: SETTINGS -->
+    <section class="view-section" id="view-settings-section" style="display: none;">
+      <div class="dashboard-grid">
+        <!-- Cilësimet e Databazës dhe Demo Data -->
+        <div class="card-panel" style="margin-bottom: 0;">
+          <div class="panel-header">
+            <h3 class="panel-title">Menaxhimi i të Dhënave</h3>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-muted);">
+              Ju mund të fshini të dhënat aktuale ose të ringarkoni të dhënat demo shqip në çdo kohë për testim.
+            </p>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn btn-secondary" id="btn-load-demo">Ngarko të dhënat demo</button>
+              <button class="btn btn-danger" id="btn-clear-data">Fshi të gjitha të dhënat</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Konfigurimi i Firebase -->
+        <div class="card-panel" style="margin-bottom: 0;">
+          <div class="panel-header">
+            <h3 class="panel-title">Sinkronizimi me Firebase (Firestore)</h3>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label" for="firebase-status">Statusi i lidhjes</label>
+              <div id="firebase-status-badge" class="badge badge-dark">Lokal (LocalStorage)</div>
+            </div>
+            
+            <form id="form-firebase-config">
+              <div class="form-group">
+                <label class="form-label" for="fb-config-json">Firebase Config JSON</label>
+                <textarea class="form-control" id="fb-config-json" placeholder='{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}' style="min-height: 120px; font-family: monospace; font-size: 0.8rem;"></textarea>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary">Lidh Firebase</button>
+                <button type="button" class="btn btn-secondary" id="btn-disconnect-fb">Shkëput</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Konfigurimi i Supabase -->
+        <div class="card-panel" style="margin-bottom: 0;">
+          <div class="panel-header">
+            <h3 class="panel-title">Sinkronizimi me Supabase</h3>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label" for="supabase-status">Statusi i lidhjes</label>
+              <div id="supabase-status-badge" class="badge badge-dark">Lokal (LocalStorage)</div>
+            </div>
+            
+            <form id="form-supabase-config">
+              <div class="form-group">
+                <label class="form-label" for="sb-url">Supabase URL</label>
+                <input type="text" class="form-control" id="sb-url" placeholder="https://your-project.supabase.co" style="font-size:0.9rem;">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="sb-key">Supabase Anon Key</label>
+                <textarea class="form-control" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="min-height: 70px; font-family: monospace; font-size:0.8rem;"></textarea>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary">Lidh Supabase</button>
+                <button type="button" class="btn btn-secondary" id="btn-disconnect-sb">Shkëput</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- A. MODAL: ADD CUSTOMER -->
+  <div class="modal-backdrop" id="modal-customer">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Shto Klient të Ri</h3>
+        <button class="modal-close" onclick="closeModal('modal-customer')">&times;</button>
+      </div>
+      <form id="form-add-customer">
+        <div class="modal-body">
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="cust-firstname">Emri <span class="required">*</span></label>
+              <input type="text" class="form-control" id="cust-firstname" required>
+            </div>
+            <div>
+              <label class="form-label" for="cust-lastname">Mbiemri</label>
+              <input type="text" class="form-control" id="cust-lastname">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-phone">Numri i Telefonit <span class="required">*</span></label>
+            <input type="text" class="form-control" id="cust-phone" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-email">Email</label>
+            <input type="email" class="form-control" id="cust-email">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-address">Adresa</label>
+            <input type="text" class="form-control" id="cust-address" placeholder="p.sh. Rruga e Kavajës, Tiranë">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cust-notes">Shënime</label>
+            <textarea class="form-control" id="cust-notes"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-customer')">Anulo</button>
+          <button type="submit" class="btn btn-primary">Ruaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- B. MODAL: ADD VEHICLE -->
+  <div class="modal-backdrop" id="modal-vehicle">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Shto Automjet të Ri</h3>
+        <button class="modal-close" onclick="closeModal('modal-vehicle')">&times;</button>
+      </div>
+      <form id="form-add-vehicle">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="veh-owner-select">Pronari (Klienti) <span class="required">*</span></label>
+            <select class="form-control" id="veh-owner-select" required>
+              <option value="" disabled selected>Zgjidh klientin...</option>
+              <!-- Popullohet nga JS -->
+            </select>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="veh-plate">Targa <span class="required">*</span></label>
+              <input type="text" class="form-control" id="veh-plate" placeholder="p.sh. AB 123 CD" required>
+            </div>
+            <div>
+              <label class="form-label" for="veh-vin">VIN / Numri i shasisë</label>
+              <input type="text" class="form-control" id="veh-vin">
+            </div>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="veh-make">Marka <span class="required">*</span></label>
+              <input type="text" class="form-control" id="veh-make" placeholder="p.sh. BMW" required>
+            </div>
+            <div>
+              <label class="form-label" for="veh-model">Modeli <span class="required">*</span></label>
+              <input type="text" class="form-control" id="veh-model" placeholder="p.sh. 320d" required>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="veh-year">Viti <span class="required">*</span></label>
+              <input type="number" class="form-control" id="veh-year" min="1900" max="2030" required>
+            </div>
+            <div>
+              <label class="form-label" for="veh-mileage">Kilometrazhi aktual <span class="required">*</span></label>
+              <input type="number" class="form-control" id="veh-mileage" min="0" required>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="veh-engine">Motori</label>
+              <input type="text" class="form-control" id="veh-engine" placeholder="p.sh. 2.0 TDI">
+            </div>
+            <div>
+              <label class="form-label" for="veh-fuel">Karburanti</label>
+              <select class="form-control" id="veh-fuel">
+                <option value="">Zgjidh...</option>
+                <option value="Naftë">Naftë</option>
+                <option value="Benzinë">Benzinë</option>
+                <option value="Gas / Benzinë">Gas / Benzinë</option>
+                <option value="Hibrid">Hibrid</option>
+                <option value="Elektrike">Elektrike</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="veh-trans">Kambio</label>
+              <select class="form-control" id="veh-trans">
+                <option value="">Zgjidh...</option>
+                <option value="Automatike">Automatike</option>
+                <option value="Manuale">Manuale</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="veh-color">Ngjyra</label>
+              <input type="text" class="form-control" id="veh-color" placeholder="p.sh. E zezë">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="veh-notes">Shënime shtesë</label>
+            <textarea class="form-control" id="veh-notes"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-vehicle')">Anulo</button>
+          <button type="submit" class="btn btn-primary">Ruaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- C. MODAL: REGISTER SERVICE -->
+  <div class="modal-backdrop" id="modal-service">
+    <div class="modal-window" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Regjistro Shërbim të Ri</h3>
+        <button class="modal-close" onclick="closeModal('modal-service')">&times;</button>
+      </div>
+      <form id="form-add-service">
+        <div class="modal-body">
+          
+          <!-- Seksioni 1: Të dhënat Bazë -->
+          <h4 style="margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 0.95rem; color: var(--accent);">Të dhënat bazë</h4>
+          <div class="form-group" id="service-vehicle-select-container">
+            <label class="form-label" for="srv-vehicle-select">Automjeti <span class="required">*</span></label>
+            <select class="form-control" id="srv-vehicle-select" required>
+              <option value="" disabled selected>Zgjidh makinën...</option>
+              <!-- Popullohet nga JS -->
+            </select>
+          </div>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="srv-date">Data e servisit <span class="required">*</span></label>
+              <input type="date" class="form-control" id="srv-date" required>
+            </div>
+            <div>
+              <label class="form-label" for="srv-mileage">Kilometrazhi <span class="required">*</span></label>
+              <input type="number" class="form-control" id="srv-mileage" min="0" required>
+              <!-- Paralajmërimi i kilometrazhit -->
+              <div id="srv-mileage-warning" class="mileage-warning">
+                Kilometrazhi i futur është më i ulët se kilometrazhi i regjistruar më parë. Ju lutem kontrollojeni.
+              </div>
+            </div>
+          </div>
+
+          <!-- Seksioni 2: Lloji i Shërbimit -->
+          <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 0.95rem; color: var(--accent);">Kategoria & Përshkrimi</h4>
+          <div class="form-group">
+            <label class="form-label">Zgjidh llojet e shërbimit (Zgjidh disa nëse aplikohet)</label>
+            <div class="service-types-grid">
+              <input type="checkbox" id="type-vaji" value="Ndërrim vaji" class="service-type-checkbox">
+              <label for="type-vaji" class="service-type-label">Ndërrim vaji</label>
+
+              <input type="checkbox" id="type-filtrash" value="Ndërrim filtrash" class="service-type-checkbox">
+              <label for="type-filtrash" class="service-type-label">Ndërrim filtrash</label>
+
+              <input type="checkbox" id="type-periodik" value="Kontroll periodik" class="service-type-checkbox">
+              <label for="type-periodik" class="service-type-label">Kontroll periodik</label>
+
+              <input type="checkbox" id="type-frenat" value="Frenat" class="service-type-checkbox">
+              <label for="type-frenat" class="service-type-label">Frenat</label>
+
+              <input type="checkbox" id="type-gomat" value="Gomat" class="service-type-checkbox">
+              <label for="type-gomat" class="service-type-label">Gomat</label>
+
+              <input type="checkbox" id="type-diagnostikim" value="Diagnostikim" class="service-type-checkbox">
+              <label for="type-diagnostikim" class="service-type-label">Diagnostikim</label>
+
+              <input type="checkbox" id="type-elektrike" value="Elektrikë" class="service-type-checkbox">
+              <label for="type-elektrike" class="service-type-label">Elektrikë</label>
+
+              <input type="checkbox" id="type-motor" value="Motor" class="service-type-checkbox">
+              <label for="type-motor" class="service-type-label">Motor</label>
+
+              <input type="checkbox" id="type-kambio" value="Kambio" class="service-type-checkbox">
+              <label for="type-kambio" class="service-type-label">Kambio</label>
+
+              <input type="checkbox" id="type-kondicioner" value="Kondicioner" class="service-type-checkbox">
+              <label for="type-kondicioner" class="service-type-label">Kondicioner</label>
+
+              <input type="checkbox" id="type-suspension" value="Suspension" class="service-type-checkbox">
+              <label for="type-suspension" class="service-type-label">Suspension</label>
+
+              <input type="checkbox" id="type-riparim" value="Riparim" class="service-type-checkbox">
+              <label for="type-riparim" class="service-type-label">Riparim</label>
+
+              <input type="checkbox" id="type-tjetër" value="Tjetër" class="service-type-checkbox">
+              <label for="type-tjetër" class="service-type-label">Tjetër</label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="srv-description">Shërbimi i kryer (Përshkrimi manual) <span class="required">*</span></label>
+            <textarea class="form-control" id="srv-description" placeholder="Përshkruani me pak fjalë se çfarë u bë te makina..." required></textarea>
+          </div>
+
+          <!-- Seksioni 3: Pjesët e Ndërruara -->
+          <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 0.95rem; color: var(--accent);">Pjesët e ndërruara</h4>
+          <div class="parts-editor-container">
+            <div class="parts-list-rows" id="parts-rows-container">
+              <!-- JS do të shtojë rreshtat këtu -->
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-part-row">+ Shto pjesë</button>
+          </div>
+
+          <!-- Seksioni 4: Kostot -->
+          <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 0.95rem; color: var(--accent);">Kostoja (Lekë ALL)</h4>
+          <div class="form-group row">
+            <div>
+              <label class="form-label" for="srv-cost-parts">Kosto e pjesëve (Lekë)</label>
+              <input type="number" class="form-control cost-input" id="srv-cost-parts" min="0" value="0">
+            </div>
+            <div>
+              <label class="form-label" for="srv-cost-labor">Kosto e punës (Lekë)</label>
+              <input type="number" class="form-control cost-input" id="srv-cost-labor" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size: 1rem;">Totali i Shërbimit</label>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);" id="srv-total-display">0 Lekë</div>
+          </div>
+
+          <!-- Seksioni 5: Shënimet e Mekanikut -->
+          <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 0.95rem; color: var(--accent);">Shënime të mekanikut</h4>
+          <div class="form-group">
+            <textarea class="form-control" id="srv-notes" placeholder="Rekomandime për servisin e ardhshëm, vëzhgime gjatë kontrollit etj."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-service')">Anulo</button>
+          <button type="submit" class="btn btn-warning" id="btn-save-service">Ruaj shërbimin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- D. MODAL: CONFIRM DELETE -->
+  <div class="modal-backdrop" id="modal-confirm-delete">
+    <div class="modal-window" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-delete-title">A jeni të sigurt?</h3>
+        <button class="modal-close" onclick="closeModal('modal-confirm-delete')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-delete-message" style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.5rem;">
+          Ky veprim do të fshijë këtë rekord dhe të gjitha të dhënat e tij. Ky veprim nuk mund të kthehet mbrapsht.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-confirm-delete')">Anulo</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-action">Po, Fshije</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
