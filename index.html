@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Libri Shërbimeve</title>
+  <link rel="stylesheet" href="style.css?v=settings-pdf-20260815b">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="env-config.js" defer></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-icon">
+        <i data-lucide="wrench" style="width:18px;height:18px;color:white;"></i>
+      </div>
+      <span class="logo-text">Libri Shërbimeve</span>
+    </div>
+
+    <nav>
+      <ul class="nav-links">
+        <li class="nav-item active" data-view="dashboard">
+          <a href="#">
+            <i data-lucide="layout-dashboard" class="nav-icon"></i>
+            <span>Paneli</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="vehicles">
+          <a href="#">
+            <i data-lucide="car" class="nav-icon"></i>
+            <span>Automjetet</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="services">
+          <a href="#">
+            <i data-lucide="wrench" class="nav-icon"></i>
+            <span>Shërbimet</span>
+          </a>
+        </li>
+        <li class="nav-divider" aria-hidden="true"></li>
+        <li class="nav-item settings-nav-item" data-view="settings">
+          <a href="#">
+            <i data-lucide="settings" class="nav-icon"></i>
+            <span>Cilësimet</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+  <!-- ===== END SIDEBAR ===== -->
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+
+    <!-- Top header bar -->
+    <header class="header-bar">
+      <div class="page-title">
+        <h1 id="view-title">Paneli</h1>
+        <p id="view-subtitle-text">Statistikat e përgjithshme të servisit</p>
+      </div>
+      <div class="search-container">
+        <i data-lucide="search" class="search-icon-svg"></i>
+        <input type="text" class="search-input" id="global-search" placeholder="Kërko pronar, targë, markë...">
+        <div class="search-results" id="search-results-dropdown"></div>
+      </div>
+    </header>
+
+    <!-- ===== VIEW: DASHBOARD ===== -->
+    <section class="view-section" id="view-dashboard-section">
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Automjete</span>
+            <span class="stat-value" id="stats-vehicles">0</span>
+          </div>
+          <div class="stat-icon" style="background:var(--accent-light);">
+            <i data-lucide="car" style="width:24px;height:24px;color:var(--accent);"></i>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info">
+            <span class="stat-label">Shërbime</span>
+            <span class="stat-value" id="stats-services">0</span>
+          </div>
+          <div class="stat-icon" style="background:var(--warning-light);">
+            <i data-lucide="wrench" style="width:24px;height:24px;color:var(--warning);"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel dashboard-actions-panel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Veprime të shpejta</h3>
+            <p class="panel-subtitle">Menaxho automjetet dhe shërbimet e servisit</p>
+          </div>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-primary dashboard-action-btn" id="btn-dashboard-add-vehicle">
+            <i data-lucide="plus" style="width:18px;height:18px;"></i>
+            <span>Shto automjet</span>
+          </button>
+          <button class="btn btn-warning dashboard-action-btn" id="btn-dashboard-add-service">
+            <i data-lucide="plus-circle" style="width:18px;height:18px;"></i>
+            <span>Regjistro shërbim</span>
+          </button>
+        </div>
+      </div>
+    </section>
+    <!-- ===== END DASHBOARD ===== -->
+
+    <!-- ===== VIEW: VEHICLES (Automjetet) ===== -->
+    <section class="view-section" id="view-vehicles-section" style="display:none;">
+
+      <div class="page-toolbar">
+        <div class="search-container">
+          <i data-lucide="search" class="search-icon-svg"></i>
+          <input type="text" class="search-input" id="vehicles-search" placeholder="Kërko sipas pronarit ose markës...">
+        </div>
+        <button class="btn btn-primary" id="btn-add-vehicle">
+          <i data-lucide="plus" style="width:16px;height:16px;"></i>
+          Shto automjet
+        </button>
+      </div>
+
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Lista e Automjeteve</h3>
+        </div>
+        <div class="table-responsive">
+          <table id="table-vehicles">
+            <thead>
+              <tr>
+                <th>Pronari</th>
+                <th>Marka / Modeli</th>
+                <th>Targa</th>
+                <th>Telefoni</th>
+                <th>Km</th>
+                <th style="text-align:right;">Veprime</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+    <!-- ===== END VEHICLES ===== -->
+
+    <!-- ===== VIEW: VEHICLE PROFILE ===== -->
+    <section class="view-section" id="view-vehicle-profile-section" style="display:none;">
+
+      <div class="card-panel" style="margin-bottom:2rem;padding:2rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem;">
+
+          <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+            <div style="width:68px;height:68px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="car" style="width:32px;height:32px;color:var(--accent);"></i>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <h2 id="prof-brand-model" style="font-size:1.75rem;font-weight:700;color:var(--primary);margin:0;">—</h2>
+                <span class="result-plate profile-plate-badge-large" id="prof-plate">—</span>
+              </div>
+              <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;font-size:0.85rem;color:var(--text-muted);">
+                <span id="prof-tag-year" class="meta-tag">—</span>
+                <span>·</span>
+                <span id="prof-tag-engine" class="meta-tag">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:3rem;flex-wrap:wrap;">
+            <div>
+              <span style="display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:600;">Kilometrazhi</span>
+              <span id="prof-mileage" style="font-size:1.5rem;font-weight:700;color:var(--primary);">—</span>
+            </div>
+            <div>
+              <span style="display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);font-weight:600;">Pronari</span>
+              <span id="prof-owner" style="font-size:1.1rem;font-weight:700;color:var(--primary);display:block;">—</span>
+              <span id="prof-phone" style="font-size:0.85rem;color:var(--accent);font-weight:500;">—</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:0.5rem;min-width:170px;">
+            <button class="btn btn-warning" id="btn-profile-add-service">
+              <i data-lucide="plus-circle" style="width:16px;height:16px;"></i>
+              Regjistro shërbim
+            </button>
+            <button class="btn btn-primary" id="btn-profile-download-pdf">
+              <i data-lucide="file-down" style="width:16px;height:16px;"></i>
+              Shkarko PDF
+            </button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+              <button class="btn btn-secondary btn-sm" id="btn-profile-edit-vehicle">Ndrysho</button>
+              <button class="btn btn-danger btn-sm" id="btn-profile-delete-vehicle">Fshi</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="profile-details-grid">
+
+        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+          <div class="card-panel" style="margin-bottom:0;">
+            <div class="panel-header" style="padding:1rem 1.25rem;">
+              <h3 class="panel-title" style="font-size:0.95rem;display:flex;align-items:center;gap:0.5rem;">
+                <i data-lucide="info" style="width:16px;height:16px;"></i> Detaje Teknike
+              </h3>
+            </div>
+            <div style="padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;font-size:0.9rem;">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Motori:</span>
+                <span id="prof-engine" style="font-weight:600;">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-muted);">VIN:</span>
+                <span id="prof-vin" style="font-weight:600;font-family:monospace;font-size:0.8rem;">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel" style="margin-bottom:0;">
+            <div class="panel-header" style="padding:1rem 1.25rem;">
+              <h3 class="panel-title" style="font-size:0.95rem;display:flex;align-items:center;gap:0.5rem;">
+                <i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i> Përmbledhje
+              </h3>
+            </div>
+            <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+              <div>
+                <span style="display:block;font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Servisi i Fundit</span>
+                <span id="prof-summary-last-service" style="font-size:1.1rem;font-weight:700;color:var(--primary);">—</span>
+              </div>
+              <div>
+                <span style="display:block;font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Numri i Shërbimeve</span>
+                <span id="prof-summary-total-services" style="font-size:1.1rem;font-weight:700;color:var(--primary);">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:1.5rem;font-size:1.2rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:0.5rem;">
+            <i data-lucide="calendar" style="width:20px;height:20px;color:var(--accent);"></i>
+            Historiku i Servisit
+          </h3>
+          <div class="timeline" id="vehicle-timeline"></div>
+        </div>
+
+      </div>
+
+    </section>
+    <!-- ===== END VEHICLE PROFILE ===== -->
+
+    <!-- ===== VIEW: SERVICES (Shërbimet) ===== -->
+    <section class="view-section" id="view-services-section" style="display:none;">
+
+      <div class="page-toolbar">
+        <div class="search-container">
+          <i data-lucide="search" class="search-icon-svg"></i>
+          <input type="text" class="search-input" id="services-search" placeholder="Kërko sipas pronarit ose markës...">
+        </div>
+        <button class="btn btn-warning" id="btn-add-service">
+          <i data-lucide="plus-circle" style="width:16px;height:16px;"></i>
+          Regjistro shërbim
+        </button>
+      </div>
+
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Të gjitha Shërbimet</h3>
+        </div>
+        <div class="table-responsive">
+          <table id="table-services">
+            <thead>
+              <tr>
+                <th>Automjeti</th>
+                <th>Pronari</th>
+                <th>Targa</th>
+                <th>Data</th>
+                <th>Km</th>
+                <th>Shërbimi</th>
+                <th>Kostoja</th>
+                <th style="text-align:right;">Veprime</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+    <!-- ===== END SERVICES ===== -->
+
+    <!-- ===== VIEW: SETTINGS (Cilësimet) ===== -->
+    <section class="view-section" id="view-settings-section" style="display:none;">
+      <div class="settings-page-grid">
+        <div class="card-panel settings-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Pamja e aplikacionit</h3>
+              <p class="panel-subtitle">Zgjidh temën që dëshiron të përdorësh.</p>
+            </div>
+            <i data-lucide="palette" class="settings-card-icon"></i>
+          </div>
+          <div class="settings-card-body">
+            <label class="settings-option" for="setting-theme">
+              <span class="settings-option-copy">
+                <strong>Tema</strong>
+                <small>Ndrysho të gjithë pamjen e aplikacionit.</small>
+              </span>
+              <select class="form-control settings-select" id="setting-theme">
+                <option value="light">Light Mode</option>
+                <option value="dark">Dark Mode</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="card-panel settings-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Monedha</h3>
+              <p class="panel-subtitle">Monedha ruhet dhe përdoret në të gjitha çmimet.</p>
+            </div>
+            <i data-lucide="coins" class="settings-card-icon"></i>
+          </div>
+          <div class="settings-card-body">
+            <label class="settings-option" for="setting-currency">
+              <span class="settings-option-copy">
+                <strong>Valuta</strong>
+                <small>Zgjidh mes Lek dhe Euro.</small>
+              </span>
+              <select class="form-control settings-select" id="setting-currency">
+                <option value="lek">Lek</option>
+                <option value="euro">Euro</option>
+              </select>
+            </label>
+            <div class="settings-status" id="settings-save-status" role="status">Zgjedhjet ruhen automatikisht.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ===== END SETTINGS ===== -->
+
+  </main>
+  <!-- ===== END MAIN CONTENT ===== -->
+
+  <!-- MODAL: ADD/EDIT VEHICLE -->
+  <div class="modal-backdrop" id="modal-vehicle">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-vehicle-title">Shto Automjet</h3>
+        <button class="modal-close" onclick="closeModal('modal-vehicle')">&times;</button>
+      </div>
+      <form id="form-vehicle">
+        <div class="modal-body">
+          <input type="hidden" id="veh-id">
+
+          <div class="form-group">
+            <label class="form-label">Emri i Pronarit <span class="required">*</span></label>
+            <input type="text" class="form-control" id="veh-owner-name" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Marka <span class="required">*</span></label>
+            <input type="text" class="form-control" id="veh-brand" placeholder="p.sh. Volkswagen" required>
+          </div>
+
+          <div class="form-group row">
+            <div>
+              <label class="form-label">Telefoni i Pronarit</label>
+              <input type="text" class="form-control" id="veh-owner-phone">
+            </div>
+            <div>
+              <label class="form-label">Targa</label>
+              <input type="text" class="form-control" id="veh-plate">
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <div>
+              <label class="form-label">Modeli</label>
+              <input type="text" class="form-control" id="veh-model">
+            </div>
+            <div>
+              <label class="form-label">Viti</label>
+              <input type="number" class="form-control" id="veh-year" min="1900" max="2100">
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <div>
+              <label class="form-label">Motori</label>
+              <input type="text" class="form-control" id="veh-engine" placeholder="p.sh. 2.0 TDI">
+            </div>
+            <div>
+              <label class="form-label">VIN</label>
+              <input type="text" class="form-control" id="veh-vin">
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-vehicle')">Anulo</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-vehicle">Ruaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD/EDIT SERVICE -->
+  <div class="modal-backdrop" id="modal-service">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-service-title">Regjistro Shërbim</h3>
+        <button class="modal-close" onclick="closeModal('modal-service')">&times;</button>
+      </div>
+      <form id="form-service">
+        <div class="modal-body">
+          <input type="hidden" id="srv-id">
+
+          <div class="form-group" id="srv-vehicle-group">
+            <label class="form-label">Automjeti <span class="required">*</span></label>
+            <select class="form-control" id="srv-vehicle-select" required></select>
+          </div>
+
+          <div class="form-group row">
+            <div>
+              <label class="form-label">Data e servisit <span class="required">*</span></label>
+              <input type="date" class="form-control" id="srv-date" required>
+            </div>
+            <div>
+              <label class="form-label">Kilometrazhi (km) <span class="required">*</span></label>
+              <input type="number" class="form-control" id="srv-mileage" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Llojet e shërbimit</label>
+            <div class="service-types-grid" id="srv-categories-checkboxes"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Përshkrimi i punës</label>
+            <textarea class="form-control" id="srv-description" placeholder="Çfarë u bë..."></textarea>
+          </div>
+
+          <h4 class="form-section-title">
+            <i data-lucide="package" style="width:16px;height:16px;"></i> Pjesët e ndërruara
+          </h4>
+          <div class="parts-editor-container">
+            <div class="parts-list-rows" id="srv-parts-rows-container"></div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-part-row">+ Shto pjesë</button>
+          </div>
+
+          <div class="form-group row">
+            <div>
+              <label class="form-label">Kosto pjesëve</label>
+              <input type="number" class="form-control cost-input" id="srv-cost-parts" min="0" value="0">
+            </div>
+            <div>
+              <label class="form-label">Kosto punës</label>
+              <input type="number" class="form-control cost-input" id="srv-cost-labor" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Totali</label>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--accent);" id="srv-total-display">0</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shënime</label>
+            <textarea class="form-control" id="srv-notes" placeholder="Rekomandime..."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-service')">Anulo</button>
+          <button type="submit" class="btn btn-warning" id="btn-save-service">Ruaj</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SERVICE DETAILS -->
+  <div class="modal-backdrop" id="modal-service-details">
+    <div class="modal-window" style="max-width:600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display:flex;align-items:center;gap:0.5rem;">
+          <i data-lucide="wrench" style="width:20px;height:20px;color:var(--accent);"></i>
+          Detajet e Shërbimit
+        </h3>
+        <button class="modal-close" onclick="closeModal('modal-service-details')">&times;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:1.25rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+          <div>
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Data</span>
+            <span id="detail-srv-date" style="font-size:1.05rem;font-weight:700;color:var(--primary);">—</span>
+          </div>
+          <div>
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Kilometrazhi</span>
+            <span id="detail-srv-mileage" style="font-size:1.05rem;font-weight:700;color:var(--primary);">—</span>
+          </div>
+          <div id="detail-srv-archived-badge-container" style="display:none;">
+            <span class="badge badge-warning">E Arkivuar</span>
+          </div>
+        </div>
+        <div>
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:0.4rem;">Kategoritë</span>
+          <div id="detail-srv-categories" style="display:flex;gap:0.4rem;flex-wrap:wrap;"></div>
+        </div>
+        <div>
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:0.4rem;">Puna e kryer</span>
+          <div id="detail-srv-desc" style="background:var(--bg-main);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:0.75rem 1rem;font-size:0.95rem;white-space:pre-line;">—</div>
+        </div>
+        <div id="detail-srv-parts-container" style="display:none;">
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:0.4rem;">Pjesët</span>
+          <div style="border:1px solid var(--border-color);border-radius:var(--radius-md);overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+              <thead>
+                <tr style="background:#f8fafc;">
+                  <th style="padding:0.5rem 0.75rem;font-size:0.7rem;color:var(--text-muted);">Pjesa</th>
+                  <th style="padding:0.5rem 0.75rem;text-align:center;width:60px;font-size:0.7rem;color:var(--text-muted);">Sasi</th>
+                  <th style="padding:0.5rem 0.75rem;text-align:right;font-size:0.7rem;color:var(--text-muted);">Brand</th>
+                </tr>
+              </thead>
+              <tbody id="detail-srv-parts-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:0.75rem 0;display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1rem;">
+          <div>
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Kosto Pjesë</span>
+            <span id="detail-srv-cost-parts" style="font-weight:600;">—</span>
+          </div>
+          <div>
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Kosto Punë</span>
+            <span id="detail-srv-cost-labor" style="font-weight:600;">—</span>
+          </div>
+          <div style="text-align:right;border-left:1px solid var(--border-color);padding-left:1rem;">
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Totali</span>
+            <span id="detail-srv-cost-total" style="font-size:1.3rem;font-weight:700;color:var(--accent);">—</span>
+          </div>
+        </div>
+        <div id="detail-srv-notes-container" style="display:none;">
+          <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:0.4rem;">Shënime</span>
+          <div id="detail-srv-notes" style="border-left:3px solid var(--accent);background:var(--bg-main);padding:0.5rem 0.75rem;font-size:0.85rem;font-style:italic;">—</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-service-details')">Mbyll</button>
+        <div style="display:flex;gap:0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-detail-archive" style="display:flex;align-items:center;gap:0.25rem;">
+            <i data-lucide="archive" style="width:14px;height:14px;"></i>
+            <span id="btn-detail-archive-text">Arkivo</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-detail-edit" style="display:flex;align-items:center;gap:0.25rem;border-color:var(--accent);color:var(--accent);">
+            <i data-lucide="edit" style="width:14px;height:14px;"></i> Modifiko
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" id="btn-detail-delete">Fshi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM DELETE (generic) -->
+  <div class="modal-backdrop" id="modal-confirm-delete">
+    <div class="modal-window" style="max-width:450px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-delete-title">A jeni të sigurt?</h3>
+        <button class="modal-close" onclick="closeModal('modal-confirm-delete')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-delete-message" style="font-size:0.95rem;color:var(--text-main);">
+          Ky veprim nuk mund të kthehet mbrapsht.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-confirm-delete')">Anulo</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-action">Po, fshije</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="app.js?v=settings-pdf-20260815b"></script>
+</body>
+</html>
