@@ -14,7 +14,8 @@ const state = {
 };
 
 const SETTINGS_KEYS = {
-  theme: 'libri-settings-theme',
+  // v2 intentionally ignores the old preview/test theme key so the app starts in Light Mode.
+  theme: 'libri-settings-theme-v2',
   currency: 'libri-settings-currency'
 };
 
