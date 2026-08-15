@@ -414,15 +414,32 @@ async function handleForgotPasswordRequest(event) {
   if (!client) return setRecoveryFeedback('forgot-password-feedback', 'Supabase nuk është konfiguruar.');
   if (!email) return setRecoveryFeedback('forgot-password-feedback', 'Shkruaj email-in për të marrë linkun.');
   if (!isValidEmailFormat(email)) return setRecoveryFeedback('forgot-password-feedback', 'Ju lutem vendosni një adresë email-i të vlefshme.');
-  startForgotPasswordCooldown();
-  if (submit) setRecoverySubmitState(submit, true, 'Po dërgohet...');
+  if (submit) setRecoverySubmitState(submit, true, 'Po kontrollohet...');
   setRecoveryFeedback('forgot-password-feedback');
   try {
+    // Supabase may return no error for unknown emails. Verify against auth.users first
+    // so the UI never reports a false "link sent" success.
+    const { data: emailExists, error: verifyError } = await client.rpc('email_exists_for_password_reset', { email_to_check: email });
+    if (verifyError) {
+      console.error('Email verification RPC failed:', verifyError);
+      if (submit) setRecoverySubmitState(submit, false, 'Dërgo Linkun');
+      setRecoveryFeedback('forgot-password-feedback', 'Verifikimi i email-it nuk është konfiguruar ende. Ekzekuto migration-in e Forgot Password në Supabase.');
+      return;
+    }
+    if (!emailExists) {
+      if (submit) setRecoverySubmitState(submit, false, 'Dërgo Linkun');
+      setRecoveryFeedback('forgot-password-feedback', UNREGISTERED_EMAIL_MESSAGE);
+      return;
+    }
+
+    startForgotPasswordCooldown();
+    if (submit) setRecoverySubmitState(submit, true, 'Po dërgohet...');
     const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
     });
     if (error) {
       const remaining = getForgotPasswordCooldownRemaining();
+      setRecoverySubmitState(submit, false, 'Dërgo Linkun');
       setRecoveryFeedback('forgot-password-feedback', isRateLimitAuthError(error)
         ? `Për arsye sigurie, mund të kërkoni një link të ri çdo 60 sekonda. Ju lutem prisni edhe ${remaining} sekonda.`
         : isEmailNotRegisteredError(error)
@@ -433,6 +450,7 @@ async function handleForgotPasswordRequest(event) {
     setRecoveryFeedback('forgot-password-feedback', 'Linku për rivendosjen e fjalëkalimit u dërgua në email-in tuaj.', true);
   } catch (error) {
     const remaining = getForgotPasswordCooldownRemaining();
+    setRecoverySubmitState(submit, false, 'Dërgo Linkun');
     setRecoveryFeedback('forgot-password-feedback', isRateLimitAuthError(error)
       ? `Për arsye sigurie, mund të kërkoni një link të ri çdo 60 sekonda. Ju lutem prisni edhe ${remaining} sekonda.`
       : isEmailNotRegisteredError(error)

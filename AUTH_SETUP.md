@@ -28,11 +28,17 @@ https://domaini-yt.com/reset-password
 
 Në preview mund të shtosh edhe URL-në përkatëse të preview-it me `/reset-password`. Aplikacioni përdor automatikisht `window.location.origin + '/reset-password'` për linkun e rikuperimit.
 
-## 4. Konfigurimi publik
+## 4. Verifikimi i email-it për Forgot Password
+
+Për të mos shfaqur sukses për email-e që nuk ekzistojnë, ekzekuto skedarin `supabase-password-reset-email-check.sql` në **Supabase > SQL Editor**. Ky migration krijon funksionin `email_exists_for_password_reset`, i cili kthen vetëm `true` ose `false` dhe nuk ekspozon të dhëna të përdoruesve. Aplikacioni nuk dërgon `resetPasswordForEmail` dhe nuk aktivizon cooldown-in nëse email-i nuk gjendet.
+
+Ky kontroll ekspozon në mënyrë të qëllimshme vetëm nëse email-i ekziston, sepse kërkesa e këtij aplikacioni është që përdoruesi të marrë njoftim të ndryshëm kur email-i nuk është i regjistruar. Nëse migration-i nuk ekzekutohet, aplikacioni ndalon dërgimin dhe shfaq njoftim që verifikimi nuk është konfiguruar, në vend që të shfaqë sukses të rremë.
+
+## 5. Konfigurimi publik
 
 `env-config.js` përmban Project URL dhe publishable/anon key. Këto janë çelësa publikë për frontend. Mos vendos kurrë `service_role key` ose fjalëkalimin e databazës në këtë skedar.
 
-## 5. Testimi
+## 6. Testimi
 
 Pa sesion, aplikacioni shfaq Login Page dhe fsheh Dashboard-in. Pas hyrjes, shfaqet sidebar-i dhe kërkesat e databazës dërgohen me `user_id`. Pas Logout, sesioni hiqet dhe përdoruesi kthehet te Login Page.
 
