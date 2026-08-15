@@ -29,6 +29,9 @@ let currentUser = null;
 let authMode = 'login';
 let authReady = false;
 let resetRecoveryReady = false;
+let forgotPasswordCooldownTimer = null;
+const FORGOT_PASSWORD_COOLDOWN_KEY = 'libri-forgot-password-cooldown-until';
+const FORGOT_PASSWORD_COOLDOWN_SECONDS = 60;
 
 function isResetPasswordRoute() {
   return window.location.pathname === '/reset-password' || new URLSearchParams(window.location.search).get('reset-password') === '1';
@@ -317,6 +320,7 @@ function showForgotPasswordPage(email = '') {
   const emailField = document.getElementById('forgot-password-email');
   if (emailField) emailField.value = email;
   setRecoveryFeedback('forgot-password-feedback');
+  restoreForgotPasswordCooldown();
   window.lucide && window.lucide.createIcons();
   emailField?.focus();
 }
@@ -338,13 +342,66 @@ function showResetPasswordPage(message = '') {
   window.lucide && window.lucide.createIcons();
 }
 
+function getForgotPasswordCooldownRemaining() {
+  const until = Number(localStorage.getItem(FORGOT_PASSWORD_COOLDOWN_KEY) || 0);
+  return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+}
+
+function restoreForgotPasswordCooldown() {
+  const submit = document.getElementById('forgot-password-submit');
+  const remaining = getForgotPasswordCooldownRemaining();
+  if (!submit || !remaining) {
+    if (remaining === 0) localStorage.removeItem(FORGOT_PASSWORD_COOLDOWN_KEY);
+    return;
+  }
+  startForgotPasswordCooldown(remaining);
+}
+
+function startForgotPasswordCooldown(seconds = FORGOT_PASSWORD_COOLDOWN_SECONDS) {
+  const submit = document.getElementById('forgot-password-submit');
+  if (!submit) return;
+  const until = Date.now() + seconds * 1000;
+  localStorage.setItem(FORGOT_PASSWORD_COOLDOWN_KEY, String(until));
+  if (forgotPasswordCooldownTimer) window.clearInterval(forgotPasswordCooldownTimer);
+  const tick = () => {
+    const remaining = getForgotPasswordCooldownRemaining();
+    if (remaining <= 0) {
+      window.clearInterval(forgotPasswordCooldownTimer);
+      forgotPasswordCooldownTimer = null;
+      localStorage.removeItem(FORGOT_PASSWORD_COOLDOWN_KEY);
+      setRecoverySubmitState(submit, false, 'Dërgo Linkun');
+      return;
+    }
+    submit.disabled = true;
+    submit.classList.remove('is-loading');
+    const label = submit.querySelector('.auth-submit-label');
+    const spinner = submit.querySelector('.auth-submit-spinner');
+    if (label) label.textContent = `Dërgo përsëri (${remaining}s)`;
+    if (spinner) spinner.hidden = true;
+  };
+  tick();
+  forgotPasswordCooldownTimer = window.setInterval(tick, 1000);
+}
+
+function isRateLimitAuthError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('rate limit') || message.includes('too many') || message.includes('security') || message.includes('60 seconds');
+}
+
 async function handleForgotPasswordRequest(event) {
   event.preventDefault();
   const client = getSupabaseClient();
   const email = document.getElementById('forgot-password-email')?.value.trim();
   const submit = document.getElementById('forgot-password-submit');
+  const currentCooldown = getForgotPasswordCooldownRemaining();
+  if (currentCooldown > 0) {
+    setRecoveryFeedback('forgot-password-feedback', `Për arsye sigurie, mund të kërkoni një link të ri çdo 60 sekonda. Ju lutem prisni edhe ${currentCooldown} sekonda.`);
+    startForgotPasswordCooldown(currentCooldown);
+    return;
+  }
   if (!client) return setRecoveryFeedback('forgot-password-feedback', 'Supabase nuk është konfiguruar.');
   if (!email) return setRecoveryFeedback('forgot-password-feedback', 'Shkruaj email-in për të marrë linkun.');
+  startForgotPasswordCooldown();
   if (submit) setRecoverySubmitState(submit, true, 'Po dërgohet...');
   setRecoveryFeedback('forgot-password-feedback');
   try {
@@ -352,14 +409,24 @@ async function handleForgotPasswordRequest(event) {
       redirectTo: `${window.location.origin}/reset-password`
     });
     if (error) {
-      setRecoveryFeedback('forgot-password-feedback', friendlyAuthError(error));
+      const remaining = getForgotPasswordCooldownRemaining();
+      setRecoveryFeedback('forgot-password-feedback', isRateLimitAuthError(error)
+        ? `Për arsye sigurie, mund të kërkoni një link të ri çdo 60 sekonda. Ju lutem prisni edhe ${remaining} sekonda.`
+        : friendlyAuthError(error));
       return;
     }
     setRecoveryFeedback('forgot-password-feedback', 'Linku për rivendosjen e fjalëkalimit u dërgua në email-in tuaj.', true);
   } catch (error) {
-    setRecoveryFeedback('forgot-password-feedback', friendlyAuthError(error));
+    const remaining = getForgotPasswordCooldownRemaining();
+    setRecoveryFeedback('forgot-password-feedback', isRateLimitAuthError(error)
+      ? `Për arsye sigurie, mund të kërkoni një link të ri çdo 60 sekonda. Ju lutem prisni edhe ${remaining} sekonda.`
+      : friendlyAuthError(error));
   } finally {
-    if (submit) setRecoverySubmitState(submit, false, 'Dërgo Linkun');
+    if (submit) {
+      submit.classList.remove('is-loading');
+      const spinner = submit.querySelector('.auth-submit-spinner');
+      if (spinner) spinner.hidden = true;
+    }
   }
 }
 
