@@ -146,6 +146,8 @@ async function setupAuth() {
 async function handleAuthSession(session) {
   currentUser = session?.user || null;
   db.setUser(currentUser);
+  // Re-apply the explicitly saved theme after every auth state change.
+  applySettings();
   authReady = true;
   const authPage = document.getElementById('auth-page');
   const appShell = document.getElementById('app-shell');
@@ -257,6 +259,8 @@ async function handleLogout() {
   } finally {
     currentUser = null;
     db.setUser(null);
+    // Logout must not reset the user's saved theme preference.
+    applySettings();
     showLandingPage();
   }
 }
