@@ -1690,3 +1690,59 @@ body.dark-mode .service-detail-card {
   border-color: #2d4567;
   color: #e5edf8;
 }
+
+
+/* Dark Mode contrast correction for Landing Page */
+body.dark-mode .landing-page .landing-brand,
+body.dark-mode .landing-page .landing-login-link {
+  color: #f8fbff;
+}
+
+body.dark-mode .landing-page .landing-login-link:hover {
+  color: #bfdbfe;
+}
+
+body.dark-mode .landing-page .landing-kicker {
+  color: #93c5fd;
+}
+
+body.dark-mode .landing-page .landing-hero h1 {
+  color: #f8fbff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
+}
+
+body.dark-mode .landing-page .landing-description {
+  color: #d7e4f3;
+}
+
+body.dark-mode .landing-page .landing-note {
+  color: #c4d3e5;
+}
+
+body.dark-mode .landing-page .landing-feature-card {
+  background: #162943;
+  border-color: #395579;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .landing-page .landing-feature-card:hover {
+  background: #1d3555;
+  border-color: #70a7e8;
+  transform: translateY(-2px);
+}
+
+body.dark-mode .landing-page .landing-feature-card h2 {
+  color: #f8fbff;
+}
+
+body.dark-mode .landing-page .landing-feature-card p {
+  color: #c4d3e5;
+}
+
+body.dark-mode .landing-page .landing-orb-one {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+body.dark-mode .landing-page .landing-orb-two {
+  background: rgba(96, 165, 250, 0.18);
+}
