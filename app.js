@@ -19,7 +19,8 @@ const SETTINGS_KEYS = {
 };
 
 const appSettings = {
-  theme: localStorage.getItem(SETTINGS_KEYS.theme) || 'light',
+  // Light Mode is the default; Dark Mode is valid only after explicit selection.
+  theme: localStorage.getItem(SETTINGS_KEYS.theme) === 'dark' ? 'dark' : 'light',
   currency: localStorage.getItem(SETTINGS_KEYS.currency) || 'lek'
 };
 
