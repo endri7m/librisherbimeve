@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Libri Shërbimeve</title>
-  <link rel="stylesheet" href="style.css?v=landing-20260815">
+  <link rel="stylesheet" href="style.css?v=fields-20260815">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env-config.js?v=landing-20260815"></script>
+  <script src="env-config.js?v=fields-20260815"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -60,7 +60,10 @@
         <label class="form-label" for="auth-email">Email</label>
         <input class="form-control" id="auth-email" type="email" autocomplete="email" placeholder="emri@servisi.al" required>
         <label class="form-label" for="auth-password">Fjalëkalimi</label>
-        <input class="form-control" id="auth-password" type="password" autocomplete="current-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
+        <div class="password-field">
+          <input class="form-control" id="auth-password" type="password" autocomplete="current-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
+          <button class="password-toggle" id="auth-password-toggle" type="button" aria-label="Shfaq fjalëkalimin" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button>
+        </div>
         <button class="btn btn-primary auth-submit-btn" id="auth-submit" type="submit">Hyr</button>
       </form>
       <button class="auth-switch-btn" id="auth-mode-switch" type="button">Nuk ke llogari? Regjistrohu</button>
@@ -288,7 +291,7 @@
                 <span id="prof-engine" style="font-weight:600;">—</span>
               </div>
               <div style="display:flex;justify-content:space-between;">
-                <span style="color:var(--text-muted);">VIN:</span>
+                <span style="color:var(--text-muted);">VIN (Nr. Shasisë):</span>
                 <span id="prof-vin" style="font-weight:600;font-family:monospace;font-size:0.8rem;">—</span>
               </div>
             </div>
@@ -447,8 +450,8 @@
               <input type="text" class="form-control" id="veh-owner-phone">
             </div>
             <div>
-              <label class="form-label">Targa</label>
-              <input type="text" class="form-control" id="veh-plate" required placeholder="p.sh. AB 123 CD">
+              <label class="form-label">Targa <span class="optional">(opsionale)</span></label>
+              <input type="text" class="form-control" id="veh-plate" placeholder="p.sh. AB 123 CD">
             </div>
           </div>
 
@@ -469,7 +472,7 @@
               <input type="text" class="form-control" id="veh-engine" placeholder="p.sh. 2.0 TDI">
             </div>
             <div>
-              <label class="form-label">VIN</label>
+              <label class="form-label">VIN (Nr. Shasisë)</label>
               <input type="text" class="form-control" id="veh-vin">
             </div>
           </div>
@@ -505,8 +508,8 @@
               <input type="date" class="form-control" id="srv-date" required>
             </div>
             <div>
-              <label class="form-label">Kilometrazhi (km) <span class="required">*</span></label>
-              <input type="number" class="form-control" id="srv-mileage" min="0" required>
+              <label class="form-label">Kilometrazhi (km) <span class="optional">(opsionale)</span></label>
+              <input type="number" class="form-control" id="srv-mileage" min="0" placeholder="p.sh. 125000">
             </div>
           </div>
 
@@ -661,6 +664,6 @@
   <div class="toast-container" id="toast-container"></div>
   </div>
 
-  <script type="module" src="app.js?v=landing-20260815"></script>
+  <script type="module" src="app.js?v=fields-20260815"></script>
 </body>
 </html>

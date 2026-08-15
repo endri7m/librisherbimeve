@@ -94,6 +94,20 @@ function setAuthMode(mode) {
   setAuthFeedback('');
 }
 
+function setupPasswordToggle() {
+  const password = document.getElementById('auth-password');
+  const toggle = document.getElementById('auth-password-toggle');
+  if (!password || !toggle) return;
+  toggle.addEventListener('click', () => {
+    const isVisible = password.type === 'text';
+    password.type = isVisible ? 'password' : 'text';
+    toggle.setAttribute('aria-pressed', String(!isVisible));
+    toggle.setAttribute('aria-label', isVisible ? 'Shfaq fjalëkalimin' : 'Fshih fjalëkalimin');
+    toggle.innerHTML = `<i data-lucide="${isVisible ? 'eye' : 'eye-off'}" aria-hidden="true"></i>`;
+    window.lucide && window.lucide.createIcons();
+  });
+}
+
 function setupAuthHandlers() {
   const form = document.getElementById('auth-form');
   const switchButton = document.getElementById('auth-mode-switch');
@@ -103,6 +117,7 @@ function setupAuthHandlers() {
   if (form) form.addEventListener('submit', handleEmailAuth);
   if (googleButton) googleButton.addEventListener('click', handleGoogleLogin);
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+  setupPasswordToggle();
 }
 
 async function setupAuth() {
@@ -919,8 +934,8 @@ async function saveVehicle(e) {
   const vehicleBrand = document.getElementById('veh-brand').value.trim();
   const vehiclePlate = document.getElementById('veh-plate').value.trim();
 
-  if (!ownerName || !vehicleBrand || !vehiclePlate) {
-    showToast('Emri i Pronarit, Marka dhe Targa janë të detyrueshme.', 'error');
+  if (!ownerName || !vehicleBrand) {
+    showToast('Emri i Pronarit dhe Marka janë të detyrueshme.', 'error');
     return;
   }
 
@@ -1092,8 +1107,8 @@ async function saveService(e) {
   const date = document.getElementById('srv-date').value;
   const mileage = document.getElementById('srv-mileage').value;
 
-  if (!vehicleId || !date || mileage === '') {
-    showToast('Automjeti, data dhe kilometrazhi janë të detyrueshme.', 'error');
+  if (!vehicleId || !date) {
+    showToast('Automjeti dhe data janë të detyrueshme.', 'error');
     return;
   }
 

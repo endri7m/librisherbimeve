@@ -1455,3 +1455,52 @@ textarea.form-control {
 .landing-feature-card p { margin: 0; color: #64748b; font-size: .78rem; line-height: 1.45; }
 @media (max-width: 900px) { .landing-hero { grid-template-columns: 1fr; gap: 1.5rem; padding-top: 2.5rem; } .landing-hero-copy { text-align: center; } .landing-kicker, .landing-cta-row { justify-content: center; } .landing-description { margin-left: auto; margin-right: auto; } .landing-hero-visual { min-height: 320px; } }
 @media (max-width: 640px) { .landing-nav, .landing-hero, .landing-features { width: min(100% - 2rem, 540px); } .landing-nav { padding-top: 1rem; } .landing-brand { font-size: .9rem; } .landing-login-link { font-size: .78rem; } .landing-hero { min-height: auto; padding: 2.5rem 0 2.25rem; } .landing-hero h1 { font-size: clamp(2.45rem, 12vw, 3.8rem); } .landing-description { font-size: .98rem; } .landing-hero-visual { min-height: 250px; } .landing-dashboard-preview { border-width: 5px; } .preview-window-content { min-height: 205px; grid-template-columns: 60px 1fr; } .preview-mini-sidebar { padding: 12px 8px; gap: 13px; } .preview-mini-sidebar > span { width: 30px; } .preview-main { padding: 16px; } .preview-chart { height: 65px; } .landing-features { grid-template-columns: 1fr; padding-bottom: 1.5rem; } .landing-feature-card { padding: 1rem; } }
+
+
+/* Optional fields and password visibility */
+.optional {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field .form-control {
+  width: 100%;
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--accent);
+  background: var(--accent-light);
+  outline: none;
+}
+
+.password-toggle svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
