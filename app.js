@@ -165,7 +165,7 @@ async function handleAuthSession(session) {
 function setupLandingHandlers() {
   const landingStart = document.getElementById('landing-start');
   const landingLogin = document.getElementById('landing-login');
-  if (landingStart) landingStart.addEventListener('click', () => showAuthPage('', 'signup'));
+  if (landingStart) landingStart.addEventListener('click', () => showAuthPage('', 'login'));
   if (landingLogin) landingLogin.addEventListener('click', () => showAuthPage('', 'login'));
 }
 
