@@ -138,13 +138,21 @@ class DBService {
       id: this._newId('veh'), userId: this.userId,
       ownerName: vehicle.ownerName.trim(), vehicleBrand: vehicle.vehicleBrand.trim(),
       ownerPhone: (vehicle.ownerPhone || '').trim(), vehiclePlate: (vehicle.vehiclePlate || '').trim().toUpperCase(),
-      vehicleModel: (vehicle.vehicleModel || '').trim(), vehicleYear: vehicle.vehicleYear ? parseInt(vehicle.vehicleYear) : '',
+      vehicleModel: (vehicle.vehicleModel || '').trim(),       vehicleYear: vehicle.vehicleYear ? parseInt(vehicle.vehicleYear) : null,
       vehicleEngine: (vehicle.vehicleEngine || '').trim(), vehicleVin: (vehicle.vehicleVin || '').trim().toUpperCase(),
       mileage: 0, createdAt: now, updatedAt: now
     };
     if (this.isUsingSupabase()) {
-      const { data, error } = await supabaseClient.from('vehicles').insert(this._toSnake(record)).select().single();
-      if (error) throw error;
+      // Supabase normally generates the primary key (uuid) server-side.
+      // Do not send the local `veh_...` ID to a uuid column.
+      const { id, ...remoteRecord } = record;
+      const { data, error } = await supabaseClient.from('vehicles').insert(this._toSnake(remoteRecord)).select().single();
+      if (error) {
+        if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
+          throw new Error('Struktura e tabelës vehicles nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
+        }
+        throw error;
+      }
       return this._toCamel(data);
     }
     const vehicles = this._getLocal(this.vehiclesKey); vehicles.push(record); this._saveLocal(this.vehiclesKey, vehicles); return record;
@@ -217,7 +225,8 @@ class DBService {
       laborCost, partsCost, totalCost: partsCost + laborCost, notes: record.notes || '', archived: false, createdAt: now, updatedAt: now
     };
     if (this.isUsingSupabase()) {
-      const { data, error } = await supabaseClient.from('services').insert(this._toSnake(newRecord)).select().single();
+      const { id, ...remoteRecord } = newRecord;
+      const { data, error } = await supabaseClient.from('services').insert(this._toSnake(remoteRecord)).select().single();
       if (error) throw error;
       await this.updateVehicleMileage(record.vehicleId, newRecord.mileage);
       return this._toCamel(data);

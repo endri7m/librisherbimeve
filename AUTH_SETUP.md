@@ -38,3 +38,7 @@ Pa sesion, aplikacioni shfaq Login Page dhe fsheh Dashboard-in. Pas hyrjes, shfa
 4. Në Supabase hap **Authentication > Providers > Google**, aktivizo provider-in dhe ngjit vlerat te fushat **Client ID** dhe **Client Secret**.
 5. Te **Authentication > URL Configuration** shto URL-në e website-it te **Site URL** dhe shto preview/deployment URL te **Redirect URLs**.
 6. Ruaj ndryshimet dhe testo butonin Google në Login Page. Nëse provider-i është aktiv, butoni do të të ridrejtojë te Google dhe më pas do të kthejë përdoruesin në aplikacion.
+
+## Rregullimi i gabimit `owner_name`
+
+Nëse shfaqet gabimi `Could not find the 'owner_name' column of 'vehicles' in the schema cache`, ekzekuto skedarin `supabase-vehicle-schema-fix.sql` në **Supabase > SQL Editor**. Ky migration shton kolonat e automjeteve dhe shërbimeve që përdor aplikacioni, krijon indekset dhe dërgon komandën për rifreskimin e PostgREST schema cache. Pas ekzekutimit, rifresko browser-in me `Ctrl + F5`.
