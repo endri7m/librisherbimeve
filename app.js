@@ -74,11 +74,54 @@ function initApp() {
 // ==========================================
 // AUTHENTICATION
 // ==========================================
-function setAuthFeedback(message = '', isSuccess = false) {
+function setAuthFeedback(message = '', isSuccess = false, actionLabel = '', actionHandler = null) {
   const feedback = document.getElementById('auth-feedback');
   if (!feedback) return;
-  feedback.textContent = message;
-  feedback.style.color = isSuccess ? 'var(--success)' : '#dc2626';
+  feedback.textContent = '';
+  feedback.className = `auth-feedback${isSuccess ? ' auth-feedback-success' : ''}`;
+  if (message) feedback.appendChild(document.createTextNode(message));
+  if (actionLabel && actionHandler) {
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'auth-feedback-action';
+    action.textContent = actionLabel;
+    action.addEventListener('click', actionHandler, { once: true });
+    feedback.appendChild(action);
+  }
+}
+
+function setAuthSubmitState(isLoading, cooldownSeconds = 0) {
+  const submit = document.getElementById('auth-submit');
+  const label = submit?.querySelector('.auth-submit-label');
+  const spinner = submit?.querySelector('.auth-submit-spinner');
+  if (!submit) return;
+  submit.disabled = isLoading || cooldownSeconds > 0;
+  submit.classList.toggle('is-loading', isLoading);
+  if (spinner) spinner.hidden = !isLoading;
+  if (label) label.textContent = isLoading ? (authMode === 'signup' ? 'Po kontrolloj...' : 'Po hyj...') : (authMode === 'signup' ? 'Regjistrohu' : 'Hyr');
+  if (cooldownSeconds > 0) {
+    let remaining = cooldownSeconds;
+    if (label) label.textContent = `Provo përsëri pas ${remaining}s`;
+    const timer = window.setInterval(() => {
+      remaining -= 1;
+      if (!submit.isConnected || remaining <= 0) {
+        window.clearInterval(timer);
+        setAuthSubmitState(false);
+        return;
+      }
+      if (label) label.textContent = `Provo përsëri pas ${remaining}s`;
+    }, 1000);
+  }
+}
+
+function showLoginWithEmail(email = '') {
+  const emailField = document.getElementById('auth-email');
+  if (emailField) emailField.value = email;
+  setAuthMode('login');
+  const passwordField = document.getElementById('auth-password');
+  if (passwordField) passwordField.focus();
+  const existingAction = document.getElementById('auth-existing-login');
+  if (existingAction) existingAction.hidden = true;
 }
 
 function setAuthMode(mode) {
@@ -90,8 +133,14 @@ function setAuthMode(mode) {
   const password = document.getElementById('auth-password');
   if (title) title.textContent = authMode === 'signup' ? 'Krijo llogari' : 'Hyr në llogari';
   if (subtitle) subtitle.textContent = authMode === 'signup' ? 'Regjistro servisin tënd dhe mbaji të dhënat private.' : 'Hyr në panelin e servisit për të menaxhuar automjetet dhe shërbimet.';
-  if (submit) submit.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr';
+  const submitLabel = submit?.querySelector('.auth-submit-label');
+  if (submitLabel) submitLabel.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr';
+  if (submit) submit.classList.remove('is-loading');
+  const forgotPassword = document.getElementById('auth-forgot-password');
+  if (forgotPassword) forgotPassword.hidden = authMode === 'signup';
   if (switchButton) switchButton.textContent = authMode === 'signup' ? 'Ke llogari? Hyr këtu' : 'Nuk ke llogari? Regjistrohu';
+  const existingAction = document.getElementById('auth-existing-login');
+  if (existingAction) existingAction.hidden = true;
   if (password) password.autocomplete = authMode === 'signup' ? 'new-password' : 'current-password';
   setAuthFeedback('');
 }
@@ -114,11 +163,15 @@ function setupAuthHandlers() {
   const form = document.getElementById('auth-form');
   const switchButton = document.getElementById('auth-mode-switch');
   const googleButton = document.getElementById('auth-google');
+  const forgotPasswordButton = document.getElementById('auth-forgot-password');
+  const existingLoginButton = document.getElementById('auth-existing-login');
   const logoutButton = document.getElementById('btn-logout');
   const settingsLogoutButton = document.getElementById('settings-logout');
   if (switchButton) switchButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
   if (form) form.addEventListener('submit', handleEmailAuth);
   if (googleButton) googleButton.addEventListener('click', handleGoogleLogin);
+  if (forgotPasswordButton) forgotPasswordButton.addEventListener('click', handleForgotPassword);
+  if (existingLoginButton) existingLoginButton.addEventListener('click', () => showLoginWithEmail(document.getElementById('auth-email')?.value.trim() || ''));
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
   if (settingsLogoutButton) settingsLogoutButton.addEventListener('click', handleLogout);
   setupPasswordToggle();
@@ -205,24 +258,59 @@ async function handleEmailAuth(event) {
   if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
   const email = document.getElementById('auth-email')?.value.trim();
   const password = document.getElementById('auth-password')?.value;
-  const submit = document.getElementById('auth-submit');
   if (!email || !password) return setAuthFeedback('Plotëso email-in dhe fjalëkalimin.');
-  if (submit) { submit.disabled = true; submit.textContent = authMode === 'signup' ? 'Duke krijuar...' : 'Duke hyrë...'; }
   setAuthFeedback('');
-  const result = authMode === 'signup'
-    ? await client.auth.signUp({ email, password })
-    : await client.auth.signInWithPassword({ email, password });
-  if (submit) { submit.disabled = false; submit.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr'; }
-  if (result.error) return setAuthFeedback(friendlyAuthError(result.error));
-  if (authMode === 'signup' && !result.data.session) {
-    setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim. Nëse e provove disa herë, ju lutem prisni 1 minutë për siguri dhe provojeni përsëri.', true);
+  setAuthSubmitState(true);
+  try {
+    const result = authMode === 'signup'
+      ? await client.auth.signUp({ email, password })
+      : await client.auth.signInWithPassword({ email, password });
+    if (result.error) {
+      const existingEmail = authMode === 'signup' && isExistingEmailError(result.error);
+      if (existingEmail) {
+        setAuthFeedback('Ky email është i regjistruar më parë. Ju lutem identifikohuni (Login).', false, 'Hyr këtu', () => showLoginWithEmail(email));
+      } else {
+        setAuthFeedback(friendlyAuthError(result.error));
+      }
+      setAuthSubmitState(false, authMode === 'signup' ? 5 : 3);
+      return;
+    }
+    setAuthSubmitState(false);
+    if (authMode === 'signup' && !result.data.session) {
+      setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim.', true);
+    }
+  } catch (error) {
+    setAuthFeedback(friendlyAuthError(error));
+    setAuthSubmitState(false, authMode === 'signup' ? 5 : 3);
   }
+}
+
+function isExistingEmailError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toLowerCase();
+  return code === 'user_already_exists' || message.includes('already registered') || message.includes('already been registered') || message.includes('user already exists') || message.includes('email address is already registered');
+}
+
+async function handleForgotPassword() {
+  const client = getSupabaseClient();
+  const email = document.getElementById('auth-email')?.value.trim();
+  if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
+  if (!email) {
+    setAuthFeedback('Shkruaj email-in për të marrë lidhjen e rikuperimit.');
+    document.getElementById('auth-email')?.focus();
+    return;
+  }
+  const button = document.getElementById('auth-forgot-password');
+  if (button) { button.disabled = true; button.textContent = 'Po dërgohet...'; }
+  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  if (button) { button.disabled = false; button.textContent = 'Harrova fjalëkalimin'; }
+  if (error) return setAuthFeedback(friendlyAuthError(error));
+  setAuthFeedback('Nëse ky email është i regjistruar, do të marrësh një lidhje për ndryshimin e fjalëkalimit.', true);
 }
 
 function friendlyAuthError(error) {
   const message = String(error?.message || '').toLowerCase();
-  if (message.includes('already registered') || message.includes('already been registered')) return 'Ky email është regjistruar më parë. Provo të hysh në llogari.';
-  if (message.includes('invalid login credentials')) return 'Email-i ose fjalëkalimi nuk është i saktë.';
+  if (message.includes('invalid login credentials') || message.includes('invalid email or password')) return 'Email-i ose fjalëkalimi nuk është i saktë.';
   if (message.includes('password') && (message.includes('6') || message.includes('short'))) return 'Fjalëkalimi duhet të ketë të paktën 6 karaktere.';
   if (message.includes('rate limit') || message.includes('too many') || message.includes('security')) return 'Kemi marrë shumë tentativa. Ju lutem prisni 1 minutë për siguri dhe provojeni përsëri.';
   if (message.includes('email')) return 'Kontrollo formatin e email-it dhe provo përsëri.';

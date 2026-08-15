@@ -64,9 +64,11 @@
           <input class="form-control" id="auth-password" type="password" autocomplete="current-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
           <button class="password-toggle" id="auth-password-toggle" type="button" aria-label="Shfaq fjalëkalimin" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button>
         </div>
-        <button class="btn btn-primary auth-submit-btn" id="auth-submit" type="submit">Hyr</button>
+        <button class="btn btn-primary auth-submit-btn" id="auth-submit" type="submit"><span class="auth-submit-label">Hyr</span><span class="auth-submit-spinner" aria-hidden="true"></span></button>
+        <button class="auth-forgot-btn" id="auth-forgot-password" type="button">Harrova fjalëkalimin</button>
       </form>
       <button class="auth-switch-btn" id="auth-mode-switch" type="button">Nuk ke llogari? Regjistrohu</button>
+      <button class="auth-existing-login-btn" id="auth-existing-login" type="button" hidden>Hyr këtu</button>
       <div class="auth-divider"><span>ose vazhdo me</span></div>
       <div class="auth-social-grid">
         <button class="btn btn-secondary auth-social-btn" id="auth-google" type="button"><span class="social-letter">G</span> Google</button>
