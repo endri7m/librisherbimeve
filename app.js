@@ -262,30 +262,69 @@ async function handleEmailAuth(event) {
   setAuthFeedback('');
   setAuthSubmitState(true);
   try {
-    const result = authMode === 'signup'
-      ? await client.auth.signUp({ email, password })
-      : await client.auth.signInWithPassword({ email, password });
-    if (result.error) {
-      const existingEmail = authMode === 'signup' && isExistingEmailError(result.error);
+    if (authMode === 'signup') {
+      const signupResult = await client.auth.signUp({ email, password });
+      const existingEmail = isExistingEmailError(signupResult.error) || isExistingEmailSignupResponse(signupResult.data);
+
+      // Registration doubles as Login for an existing email.
       if (existingEmail) {
-        setAuthFeedback('Ky email është i regjistruar më parë. Ju lutem identifikohuni (Login).', false, 'Hyr këtu', () => showLoginWithEmail(email));
-      } else {
-        setAuthFeedback(friendlyAuthError(result.error));
+        const loginResult = await client.auth.signInWithPassword({ email, password });
+        if (!loginResult.error && loginResult.data?.session) {
+          setAuthSubmitState(false);
+          await handleAuthSession(loginResult.data.session);
+          return;
+        }
+        setAuthSubmitState(false, 5);
+        setAuthFeedback('Ky email është i regjistruar, por fjalëkalimi është i gabuar.');
+        return;
       }
-      setAuthSubmitState(false, authMode === 'signup' ? 5 : 3);
+
+      if (signupResult.error) {
+        setAuthSubmitState(false, 5);
+        setAuthFeedback(friendlyAuthError(signupResult.error));
+        return;
+      }
+
+      // With Email Confirmation disabled, Supabase returns a session. Redirect immediately.
+      if (signupResult.data?.session) {
+        setAuthSubmitState(false);
+        await handleAuthSession(signupResult.data.session);
+        return;
+      }
+
+      // Defensive fallback for Supabase configurations that create the user but omit the session.
+      const loginResult = await client.auth.signInWithPassword({ email, password });
+      if (!loginResult.error && loginResult.data?.session) {
+        setAuthSubmitState(false);
+        await handleAuthSession(loginResult.data.session);
+        return;
+      }
+      setAuthSubmitState(false, 5);
+      setAuthFeedback('Regjistrimi u krye, por hyrja automatike dështoi. Provo përsëri.');
+      return;
+    }
+
+    const loginResult = await client.auth.signInWithPassword({ email, password });
+    if (loginResult.error) {
+      setAuthSubmitState(false, 3);
+      setAuthFeedback(friendlyAuthError(loginResult.error));
       return;
     }
     setAuthSubmitState(false);
-    if (authMode === 'signup' && !result.data.session) {
-      setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim.', true);
-    }
+    if (loginResult.data?.session) await handleAuthSession(loginResult.data.session);
   } catch (error) {
-    setAuthFeedback(friendlyAuthError(error));
     setAuthSubmitState(false, authMode === 'signup' ? 5 : 3);
+    setAuthFeedback(friendlyAuthError(error));
   }
 }
 
+function isExistingEmailSignupResponse(data) {
+  const identities = data?.user?.identities;
+  return Boolean(data?.user && Array.isArray(identities) && identities.length === 0);
+}
+
 function isExistingEmailError(error) {
+  if (!error) return false;
   const message = String(error?.message || '').toLowerCase();
   const code = String(error?.code || '').toLowerCase();
   return code === 'user_already_exists' || message.includes('already registered') || message.includes('already been registered') || message.includes('user already exists') || message.includes('email address is already registered');
