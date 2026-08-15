@@ -4,15 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Libri Shërbimeve</title>
-  <link rel="stylesheet" href="style.css?v=auth-20260815">
+  <link rel="stylesheet" href="style.css?v=landing-20260815">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env-config.js?v=auth-20260815"></script>
+  <script src="env-config.js?v=landing-20260815"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+  <!-- ===== LANDING PAGE ===== -->
+  <section id="landing-page" class="landing-page" aria-labelledby="landing-title">
+    <nav class="landing-nav">
+      <a class="landing-brand" href="#" aria-label="Libri i Shërbimeve">
+        <span class="landing-brand-icon"><i data-lucide="wrench" style="width:20px;height:20px;color:white;"></i></span>
+        <span>Libri i Shërbimeve</span>
+      </a>
+      <button class="landing-login-link" id="landing-login" type="button">Hyr në llogari <i data-lucide="arrow-right" style="width:16px;height:16px;"></i></button>
+    </nav>
+    <div class="landing-hero">
+      <div class="landing-hero-copy">
+        <p class="landing-kicker"><span class="landing-kicker-dot"></span> Menaxhim më i zgjuar për servisin modern</p>
+        <h1 id="landing-title">Libri i Shërbimeve Dixhital për Servisin Tuaj</h1>
+        <p class="landing-description">Menaxhoni historikun e makinave, shërbimet e kryera dhe gjeneroni raporte PDF në sekonda.</p>
+        <div class="landing-cta-row">
+          <button class="btn btn-primary landing-cta" id="landing-start" type="button">Fillo Tani falas <i data-lucide="arrow-up-right" style="width:18px;height:18px;"></i></button>
+          <span class="landing-note"><i data-lucide="shield-check" style="width:17px;height:17px;"></i> Të dhënat tuaja mbeten private</span>
+        </div>
+      </div>
+      <div class="landing-hero-visual" aria-hidden="true">
+        <div class="landing-orb landing-orb-one"></div>
+        <div class="landing-orb landing-orb-two"></div>
+        <div class="landing-dashboard-preview">
+          <div class="preview-window-bar"><span></span><span></span><span></span></div>
+          <div class="preview-window-content">
+            <div class="preview-mini-sidebar"><div class="preview-mini-logo"><i data-lucide="wrench" style="width:13px;height:13px;color:white;"></i></div><span></span><span></span><span></span></div>
+            <div class="preview-main"><div class="preview-heading"></div><div class="preview-stats"><span></span><span></span></div><div class="preview-chart"><i data-lucide="trending-up" style="width:42px;height:42px;color:#2563eb;"></i></div><div class="preview-rows"><span></span><span></span><span></span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="landing-features" aria-label="Përfitimet kryesore">
+      <article class="landing-feature-card"><div class="landing-feature-icon feature-blue"><i data-lucide="car-front"></i></div><div><h2>Automjetet në kontroll</h2><p>Mbani profilin dhe historikun e çdo makine në një vend.</p></div></article>
+      <article class="landing-feature-card"><div class="landing-feature-icon feature-amber"><i data-lucide="file-text"></i></div><div><h2>Raporte PDF</h2><p>Shkarkoni raporte të pastra për klientët në sekonda.</p></div></article>
+      <article class="landing-feature-card"><div class="landing-feature-icon feature-green"><i data-lucide="shield-check"></i></div><div><h2>Privatësi e sigurt</h2><p>Çdo servis sheh vetëm automjetet dhe shërbimet e veta.</p></div></article>
+    </div>
+  </section>
+
   <!-- ===== AUTH PAGE ===== -->
-  <section id="auth-page" class="auth-page" aria-labelledby="auth-title">
+  <section id="auth-page" class="auth-page" aria-labelledby="auth-title" style="display:none;">
     <div class="auth-card">
       <div class="auth-brand-mark"><i data-lucide="wrench" style="width:28px;height:28px;color:white;"></i></div>
       <p class="auth-eyebrow">Menaxhim profesional servisi</p>
@@ -623,6 +661,6 @@
   <div class="toast-container" id="toast-container"></div>
   </div>
 
-  <script type="module" src="app.js?v=auth-20260815b"></script>
+  <script type="module" src="app.js?v=landing-20260815"></script>
 </body>
 </html>

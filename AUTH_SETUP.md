@@ -29,3 +29,12 @@ Te **Authentication > URL Configuration**, vendos URL-në e website-it te Site U
 ## 5. Testimi
 
 Pa sesion, aplikacioni shfaq Login Page dhe fsheh Dashboard-in. Pas hyrjes, shfaqet sidebar-i dhe kërkesat e databazës dërgohen me `user_id`. Pas Logout, sesioni hiqet dhe përdoruesi kthehet te Login Page.
+
+## Udhëzime të shpejta për Google Login
+
+1. Në Google Cloud Console hap **APIs & Services > Credentials** dhe krijo një **OAuth 2.0 Client ID** me tipin **Web application**.
+2. Te **Authorized redirect URIs** shto adresën që jep Supabase, zakonisht `https://bdzchtsgoxlasucauoww.supabase.co/auth/v1/callback`.
+3. Kopjo **Client ID** dhe **Client Secret** nga Google Cloud Console.
+4. Në Supabase hap **Authentication > Providers > Google**, aktivizo provider-in dhe ngjit vlerat te fushat **Client ID** dhe **Client Secret**.
+5. Te **Authentication > URL Configuration** shto URL-në e website-it te **Site URL** dhe shto preview/deployment URL te **Redirect URLs**.
+6. Ruaj ndryshimet dhe testo butonin Google në Login Page. Nëse provider-i është aktiv, butoni do të të ridrejtojë te Google dhe më pas do të kthejë përdoruesin në aplikacion.

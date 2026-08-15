@@ -36,6 +36,7 @@ if (document.readyState === 'loading') {
 function initApp() {
   applySettings();
   setupAuthHandlers();
+  setupLandingHandlers();
   setupNavigation();
   setupFormHandlers();
   setupSearch();
@@ -130,7 +131,9 @@ async function handleAuthSession(session) {
   const authPage = document.getElementById('auth-page');
   const appShell = document.getElementById('app-shell');
   const userEmail = document.getElementById('sidebar-user-email');
+  const landingPage = document.getElementById('landing-page');
   if (currentUser) {
+    if (landingPage) landingPage.style.display = 'none';
     if (authPage) authPage.style.display = 'none';
     if (appShell) appShell.style.display = 'block';
     if (userEmail) userEmail.textContent = currentUser.email || 'Përdorues i loguar';
@@ -138,16 +141,35 @@ async function handleAuthSession(session) {
     window.lucide && window.lucide.createIcons();
   } else {
     if (appShell) appShell.style.display = 'none';
-    showAuthPage();
+    showLandingPage();
   }
 }
 
-function showAuthPage(message = '') {
+function setupLandingHandlers() {
+  const landingStart = document.getElementById('landing-start');
+  const landingLogin = document.getElementById('landing-login');
+  if (landingStart) landingStart.addEventListener('click', () => showAuthPage('', 'signup'));
+  if (landingLogin) landingLogin.addEventListener('click', () => showAuthPage('', 'login'));
+}
+
+function showLandingPage() {
+  const landingPage = document.getElementById('landing-page');
   const authPage = document.getElementById('auth-page');
   const appShell = document.getElementById('app-shell');
+  if (landingPage) landingPage.style.display = 'block';
+  if (authPage) authPage.style.display = 'none';
+  if (appShell) appShell.style.display = 'none';
+  window.lucide && window.lucide.createIcons();
+}
+
+function showAuthPage(message = '', mode = 'login') {
+  const landingPage = document.getElementById('landing-page');
+  const authPage = document.getElementById('auth-page');
+  const appShell = document.getElementById('app-shell');
+  if (landingPage) landingPage.style.display = 'none';
   if (authPage) authPage.style.display = 'grid';
   if (appShell) appShell.style.display = 'none';
-  setAuthMode(authMode);
+  setAuthMode(mode);
   if (message) setAuthFeedback(message);
   window.lucide && window.lucide.createIcons();
 }
@@ -166,21 +188,42 @@ async function handleEmailAuth(event) {
     ? await client.auth.signUp({ email, password })
     : await client.auth.signInWithPassword({ email, password });
   if (submit) { submit.disabled = false; submit.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr'; }
-  if (result.error) return setAuthFeedback(result.error.message);
+  if (result.error) return setAuthFeedback(friendlyAuthError(result.error));
   if (authMode === 'signup' && !result.data.session) {
-    setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim.', true);
+    setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim. Nëse e provove disa herë, ju lutem prisni 1 minutë për siguri dhe provojeni përsëri.', true);
   }
+}
+
+function friendlyAuthError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  if (message.includes('already registered') || message.includes('already been registered')) return 'Ky email është regjistruar më parë. Provo të hysh në llogari.';
+  if (message.includes('invalid login credentials')) return 'Email-i ose fjalëkalimi nuk është i saktë.';
+  if (message.includes('password') && (message.includes('6') || message.includes('short'))) return 'Fjalëkalimi duhet të ketë të paktën 6 karaktere.';
+  if (message.includes('rate limit') || message.includes('too many') || message.includes('security')) return 'Kemi marrë shumë tentativa. Ju lutem prisni 1 minutë për siguri dhe provojeni përsëri.';
+  if (message.includes('email')) return 'Kontrollo formatin e email-it dhe provo përsëri.';
+  return error?.message || 'Ndodhi një gabim gjatë autentikimit. Provo përsëri.';
 }
 
 async function handleGoogleLogin() {
   const client = getSupabaseClient();
   if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
+  setAuthFeedback('Po kontrolloj konfigurimin e Google...', true);
+  try {
+    const settingsResponse = await fetch(`${window.env.SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: window.env.SUPABASE_ANON_KEY } });
+    const settings = await settingsResponse.json();
+    if (settings?.external?.google === false) {
+      return setAuthFeedback('Google Login nuk është aktivizuar ende. Aktivizoje te Supabase > Authentication > Providers > Google.');
+    }
+  } catch (error) {
+    console.warn('Nuk u verifikua konfigurimi i Google:', error);
+  }
   setAuthFeedback('Po hapim Google Login...', true);
-  const { error } = await client.auth.signInWithOAuth({
+  const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + window.location.pathname }
+    options: { redirectTo: window.location.origin + window.location.pathname, skipBrowserRedirect: true }
   });
-  if (error) setAuthFeedback(error.message);
+  if (error) return setAuthFeedback(friendlyAuthError(error));
+  if (data?.url) window.location.assign(data.url);
 }
 
 async function handleLogout() {
