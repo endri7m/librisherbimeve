@@ -28,6 +28,16 @@ const appSettings = {
 let currentUser = null;
 let authMode = 'login';
 let authReady = false;
+let resetRecoveryReady = false;
+
+function isResetPasswordRoute() {
+  return window.location.pathname === '/reset-password' || new URLSearchParams(window.location.search).get('reset-password') === '1';
+}
+
+function hasRecoveryToken() {
+  const params = new URLSearchParams(window.location.search);
+  return window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token=') || params.has('code');
+}
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp, { once: true });
@@ -145,18 +155,20 @@ function setAuthMode(mode) {
   setAuthFeedback('');
 }
 
+function togglePasswordVisibility(password, toggle) {
+  if (!password || !toggle) return;
+  const isVisible = password.type === 'text';
+  password.type = isVisible ? 'password' : 'text';
+  toggle.setAttribute('aria-pressed', String(!isVisible));
+  toggle.setAttribute('aria-label', isVisible ? 'Shfaq fjalëkalimin' : 'Fshih fjalëkalimin');
+  toggle.innerHTML = `<i data-lucide="${isVisible ? 'eye' : 'eye-off'}" aria-hidden="true"></i>`;
+  window.lucide && window.lucide.createIcons();
+}
+
 function setupPasswordToggle() {
   const password = document.getElementById('auth-password');
   const toggle = document.getElementById('auth-password-toggle');
-  if (!password || !toggle) return;
-  toggle.addEventListener('click', () => {
-    const isVisible = password.type === 'text';
-    password.type = isVisible ? 'password' : 'text';
-    toggle.setAttribute('aria-pressed', String(!isVisible));
-    toggle.setAttribute('aria-label', isVisible ? 'Shfaq fjalëkalimin' : 'Fshih fjalëkalimin');
-    toggle.innerHTML = `<i data-lucide="${isVisible ? 'eye' : 'eye-off'}" aria-hidden="true"></i>`;
-    window.lucide && window.lucide.createIcons();
-  });
+  if (password && toggle) toggle.addEventListener('click', () => togglePasswordVisibility(password, toggle));
 }
 
 function setupAuthHandlers() {
@@ -164,14 +176,23 @@ function setupAuthHandlers() {
   const switchButton = document.getElementById('auth-mode-switch');
   const googleButton = document.getElementById('auth-google');
   const forgotPasswordButton = document.getElementById('auth-forgot-password');
+  const forgotPasswordForm = document.getElementById('forgot-password-form');
+  const forgotPasswordBack = document.getElementById('forgot-password-back');
+  const resetPasswordForm = document.getElementById('reset-password-form');
   const existingLoginButton = document.getElementById('auth-existing-login');
   const logoutButton = document.getElementById('btn-logout');
   const settingsLogoutButton = document.getElementById('settings-logout');
   if (switchButton) switchButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
   if (form) form.addEventListener('submit', handleEmailAuth);
   if (googleButton) googleButton.addEventListener('click', handleGoogleLogin);
-  if (forgotPasswordButton) forgotPasswordButton.addEventListener('click', handleForgotPassword);
+  if (forgotPasswordButton) forgotPasswordButton.addEventListener('click', () => showForgotPasswordPage(document.getElementById('auth-email')?.value.trim() || ''));
+  if (forgotPasswordForm) forgotPasswordForm.addEventListener('submit', handleForgotPasswordRequest);
+  if (forgotPasswordBack) forgotPasswordBack.addEventListener('click', () => showAuthPage('', 'login'));
+  if (resetPasswordForm) resetPasswordForm.addEventListener('submit', handleResetPasswordSubmit);
   if (existingLoginButton) existingLoginButton.addEventListener('click', () => showLoginWithEmail(document.getElementById('auth-email')?.value.trim() || ''));
+  document.querySelectorAll('.recovery-password-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => togglePasswordVisibility(document.getElementById(toggle.dataset.passwordTarget), toggle));
+  });
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
   if (settingsLogoutButton) settingsLogoutButton.addEventListener('click', handleLogout);
   setupPasswordToggle();
@@ -185,7 +206,8 @@ async function setupAuth() {
     return;
   }
   client.auth.onAuthStateChange((event, session) => {
-    setTimeout(() => handleAuthSession(session), 0);
+    if (isResetPasswordRoute() && event === 'PASSWORD_RECOVERY') resetRecoveryReady = true;
+    setTimeout(() => handleAuthSession(session, event), 0);
   });
   const { data, error } = await client.auth.getSession();
   if (error) {
@@ -193,12 +215,26 @@ async function setupAuth() {
     showAuthPage('Sesioni nuk mund të verifikohej. Provo përsëri.');
     return;
   }
-  await handleAuthSession(data.session);
+  if (isResetPasswordRoute() && data.session && hasRecoveryToken()) resetRecoveryReady = true;
+  await handleAuthSession(data.session, 'INITIAL_SESSION');
 }
 
-async function handleAuthSession(session) {
+async function handleAuthSession(session, event = '') {
   currentUser = session?.user || null;
   db.setUser(currentUser);
+  if (isResetPasswordRoute()) {
+    // Recovery is a public/light page, even though Supabase temporarily provides a session.
+    appSettings.theme = 'light';
+    applySettings();
+    authReady = true;
+    if (currentUser && (resetRecoveryReady || event === 'PASSWORD_RECOVERY' || hasRecoveryToken())) {
+      resetRecoveryReady = true;
+      showResetPasswordPage();
+    } else {
+      showResetPasswordPage('Kjo lidhje për rivendosjen e fjalëkalimit është e pavlefshme ose ka skaduar. Kërko një link të ri nga Login-i.');
+    }
+    return;
+  }
   loadUserTheme();
   // Apply the saved theme only after the authenticated user is known.
   applySettings();
@@ -240,16 +276,132 @@ function showLandingPage() {
   window.lucide && window.lucide.createIcons();
 }
 
+function hideRecoveryPages() {
+  const forgotPage = document.getElementById('forgot-password-page');
+  const resetPage = document.getElementById('reset-password-page');
+  if (forgotPage) forgotPage.style.display = 'none';
+  if (resetPage) resetPage.style.display = 'none';
+}
+
 function showAuthPage(message = '', mode = 'login') {
   const landingPage = document.getElementById('landing-page');
   const authPage = document.getElementById('auth-page');
   const appShell = document.getElementById('app-shell');
+  hideRecoveryPages();
   if (landingPage) landingPage.style.display = 'none';
   if (authPage) authPage.style.display = 'grid';
   if (appShell) appShell.style.display = 'none';
   setAuthMode(mode);
   if (message) setAuthFeedback(message);
   window.lucide && window.lucide.createIcons();
+}
+
+function setRecoveryFeedback(elementId, message = '', isSuccess = false) {
+  const feedback = document.getElementById(elementId);
+  if (!feedback) return;
+  feedback.textContent = message;
+  feedback.className = `auth-feedback${isSuccess ? ' auth-feedback-success' : ''}`;
+}
+
+function showForgotPasswordPage(email = '') {
+  const landingPage = document.getElementById('landing-page');
+  const authPage = document.getElementById('auth-page');
+  const forgotPage = document.getElementById('forgot-password-page');
+  const resetPage = document.getElementById('reset-password-page');
+  const appShell = document.getElementById('app-shell');
+  if (landingPage) landingPage.style.display = 'none';
+  if (authPage) authPage.style.display = 'none';
+  if (resetPage) resetPage.style.display = 'none';
+  if (forgotPage) forgotPage.style.display = 'grid';
+  if (appShell) appShell.style.display = 'none';
+  const emailField = document.getElementById('forgot-password-email');
+  if (emailField) emailField.value = email;
+  setRecoveryFeedback('forgot-password-feedback');
+  window.lucide && window.lucide.createIcons();
+  emailField?.focus();
+}
+
+function showResetPasswordPage(message = '') {
+  const landingPage = document.getElementById('landing-page');
+  const authPage = document.getElementById('auth-page');
+  const forgotPage = document.getElementById('forgot-password-page');
+  const resetPage = document.getElementById('reset-password-page');
+  const appShell = document.getElementById('app-shell');
+  if (landingPage) landingPage.style.display = 'none';
+  if (authPage) authPage.style.display = 'none';
+  if (forgotPage) forgotPage.style.display = 'none';
+  if (resetPage) resetPage.style.display = 'grid';
+  if (appShell) appShell.style.display = 'none';
+  const form = document.getElementById('reset-password-form');
+  if (form) form.hidden = !resetRecoveryReady;
+  setRecoveryFeedback('reset-password-feedback', message);
+  window.lucide && window.lucide.createIcons();
+}
+
+async function handleForgotPasswordRequest(event) {
+  event.preventDefault();
+  const client = getSupabaseClient();
+  const email = document.getElementById('forgot-password-email')?.value.trim();
+  const submit = document.getElementById('forgot-password-submit');
+  if (!client) return setRecoveryFeedback('forgot-password-feedback', 'Supabase nuk është konfiguruar.');
+  if (!email) return setRecoveryFeedback('forgot-password-feedback', 'Shkruaj email-in për të marrë linkun.');
+  if (submit) setRecoverySubmitState(submit, true, 'Po dërgohet...');
+  setRecoveryFeedback('forgot-password-feedback');
+  try {
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    if (error) {
+      setRecoveryFeedback('forgot-password-feedback', friendlyAuthError(error));
+      return;
+    }
+    setRecoveryFeedback('forgot-password-feedback', 'Linku për rivendosjen e fjalëkalimit u dërgua në email-in tuaj.', true);
+  } catch (error) {
+    setRecoveryFeedback('forgot-password-feedback', friendlyAuthError(error));
+  } finally {
+    if (submit) setRecoverySubmitState(submit, false, 'Dërgo Linkun');
+  }
+}
+
+function setRecoverySubmitState(button, isLoading, loadingText = '') {
+  button.disabled = isLoading;
+  button.classList.toggle('is-loading', isLoading);
+  const label = button.querySelector('.auth-submit-label');
+  const spinner = button.querySelector('.auth-submit-spinner');
+  if (label) label.textContent = isLoading ? loadingText : (button.id === 'reset-password-submit' ? 'Ruaj fjalëkalimin' : 'Dërgo Linkun');
+  if (spinner) spinner.hidden = !isLoading;
+}
+
+async function handleResetPasswordSubmit(event) {
+  event.preventDefault();
+  const client = getSupabaseClient();
+  const newPassword = document.getElementById('reset-password-new')?.value || '';
+  const confirmPassword = document.getElementById('reset-password-confirm')?.value || '';
+  const submit = document.getElementById('reset-password-submit');
+  if (!resetRecoveryReady || !currentUser) return setRecoveryFeedback('reset-password-feedback', 'Kjo lidhje për rivendosjen e fjalëkalimit është e pavlefshme ose ka skaduar.');
+  if (newPassword.length < 6) return setRecoveryFeedback('reset-password-feedback', 'Fjalëkalimi duhet të ketë të paktën 6 karaktere.');
+  if (newPassword !== confirmPassword) return setRecoveryFeedback('reset-password-feedback', 'Fjalëkalimet nuk përputhen.');
+  if (submit) setRecoverySubmitState(submit, true, 'Po ruhet...');
+  setRecoveryFeedback('reset-password-feedback');
+  try {
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (error) {
+      setRecoverySubmitState(submit, false);
+      setRecoveryFeedback('reset-password-feedback', friendlyAuthError(error));
+      return;
+    }
+    setRecoveryFeedback('reset-password-feedback', 'Fjalëkalimi u ndryshua me sukses. Po të ridrejtojmë te Login-i...', true);
+    if (submit) submit.disabled = true;
+    window.setTimeout(async () => {
+      resetRecoveryReady = false;
+      await client.auth.signOut();
+      window.history.replaceState({}, document.title, '/');
+      showAuthPage('', 'login');
+    }, 3000);
+  } catch (error) {
+    setRecoverySubmitState(submit, false);
+    setRecoveryFeedback('reset-password-feedback', friendlyAuthError(error));
+  }
 }
 
 async function handleEmailAuth(event) {
@@ -328,23 +480,6 @@ function isExistingEmailError(error) {
   const message = String(error?.message || '').toLowerCase();
   const code = String(error?.code || '').toLowerCase();
   return code === 'user_already_exists' || message.includes('already registered') || message.includes('already been registered') || message.includes('user already exists') || message.includes('email address is already registered');
-}
-
-async function handleForgotPassword() {
-  const client = getSupabaseClient();
-  const email = document.getElementById('auth-email')?.value.trim();
-  if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
-  if (!email) {
-    setAuthFeedback('Shkruaj email-in për të marrë lidhjen e rikuperimit.');
-    document.getElementById('auth-email')?.focus();
-    return;
-  }
-  const button = document.getElementById('auth-forgot-password');
-  if (button) { button.disabled = true; button.textContent = 'Po dërgohet...'; }
-  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
-  if (button) { button.disabled = false; button.textContent = 'Harrova fjalëkalimin'; }
-  if (error) return setAuthFeedback(friendlyAuthError(error));
-  setAuthFeedback('Nëse ky email është i regjistruar, do të marrësh një lidhje për ndryshimin e fjalëkalimit.', true);
 }
 
 function friendlyAuthError(error) {

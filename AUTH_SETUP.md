@@ -20,7 +20,13 @@ Te **Authentication > Providers > Google**, aktivizo Google dhe vendos Client ID
 https://bdzchtsgoxlasucauoww.supabase.co/auth/v1/callback
 ```
 
-Te **Authentication > URL Configuration**, vendos URL-në e website-it te Site URL dhe shto edhe URL-në e preview/deployment-it te Redirect URLs. Aplikacioni përdor automatikisht `window.location.origin` si redirect pas hyrjes.
+Te **Authentication > URL Configuration**, vendos URL-në e website-it te Site URL dhe shto URL-në e preview/deployment-it te Redirect URLs. Për rrjedhën e Forgot Password duhet të shtosh edhe route-in e resetimit, për shembull:
+
+```text
+https://domaini-yt.com/reset-password
+```
+
+Në preview mund të shtosh edhe URL-në përkatëse të preview-it me `/reset-password`. Aplikacioni përdor automatikisht `window.location.origin + '/reset-password'` për linkun e rikuperimit.
 
 ## 4. Konfigurimi publik
 

@@ -1410,6 +1410,12 @@ textarea.form-control {
 .auth-feedback { min-height: 1.25rem; margin: 1rem 0 0; color: #dc2626; font-size: .82rem; line-height: 1.5; }
 .auth-feedback-success { color: #15803d; }
 .auth-feedback-action { border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; font-weight: 800; margin-left: .25rem; padding: 0; }
+.recovery-page .auth-card { max-width: 430px; }
+.auth-form[hidden] { display: none; }
+.recovery-page .auth-subtitle { margin-bottom: 1.25rem; }
+.recovery-page .auth-feedback { margin-top: 1rem; }
+.auth-forgot-btn { text-decoration: none; }
+.auth-forgot-btn:hover { text-decoration: underline; }
 .sidebar-account { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,.2); }
 .sidebar-user { overflow: hidden; margin-bottom: .65rem; color: #cbd5e1; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-logout { width: 100%; justify-content: center; gap: .4rem; color: #e2e8f0; border-color: rgba(148,163,184,.35); background: rgba(255,255,255,.06); }

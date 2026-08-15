@@ -64,8 +64,8 @@
           <input class="form-control" id="auth-password" type="password" autocomplete="current-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
           <button class="password-toggle" id="auth-password-toggle" type="button" aria-label="Shfaq fjalëkalimin" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button>
         </div>
+        <button class="auth-forgot-btn" id="auth-forgot-password" type="button">Harrova fjalëkalimin?</button>
         <button class="btn btn-primary auth-submit-btn" id="auth-submit" type="submit"><span class="auth-submit-label">Hyr</span><span class="auth-submit-spinner" aria-hidden="true"></span></button>
-        <button class="auth-forgot-btn" id="auth-forgot-password" type="button">Harrova fjalëkalimin</button>
       </form>
       <button class="auth-switch-btn" id="auth-mode-switch" type="button">Nuk ke llogari? Regjistrohu</button>
       <button class="auth-existing-login-btn" id="auth-existing-login" type="button" hidden>Hyr këtu</button>
@@ -75,6 +75,47 @@
         <button class="btn btn-secondary auth-social-btn auth-social-disabled" type="button" disabled title="Apple Login do të shtohet më vonë"><span class="social-letter">●</span> Apple</button>
       </div>
       <p class="auth-feedback" id="auth-feedback" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- ===== PASSWORD RESET REQUEST PAGE ===== -->
+  <section id="forgot-password-page" class="auth-page recovery-page" aria-labelledby="forgot-password-title" style="display:none;">
+    <div class="auth-card">
+      <div class="auth-brand-mark"><i data-lucide="key-round" style="width:28px;height:28px;color:white;"></i></div>
+      <p class="auth-eyebrow">Rikuperim i sigurt</p>
+      <h1 id="forgot-password-title">Harrova fjalëkalimin?</h1>
+      <p class="auth-subtitle">Shkruaj email-in e llogarisë dhe do të të dërgojmë një link për rivendosjen e fjalëkalimit.</p>
+      <form id="forgot-password-form" class="auth-form">
+        <label class="form-label" for="forgot-password-email">Email</label>
+        <input class="form-control" id="forgot-password-email" type="email" autocomplete="email" placeholder="emri@servisi.al" required>
+        <button class="btn btn-primary auth-submit-btn" id="forgot-password-submit" type="submit"><span class="auth-submit-label">Dërgo Linkun</span><span class="auth-submit-spinner" aria-hidden="true"></span></button>
+      </form>
+      <button class="auth-switch-btn" id="forgot-password-back" type="button">Kthehu te Login</button>
+      <p class="auth-feedback" id="forgot-password-feedback" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- ===== PASSWORD RESET PAGE ===== -->
+  <section id="reset-password-page" class="auth-page recovery-page" aria-labelledby="reset-password-title" style="display:none;">
+    <div class="auth-card">
+      <div class="auth-brand-mark"><i data-lucide="shield-check" style="width:28px;height:28px;color:white;"></i></div>
+      <p class="auth-eyebrow">Rivendosje e fjalëkalimit</p>
+      <h1 id="reset-password-title">Vendos fjalëkalim të ri</h1>
+      <p class="auth-subtitle">Zgjidh një fjalëkalim të ri dhe konfirmoje për të mbrojtur llogarinë.</p>
+      <form id="reset-password-form" class="auth-form">
+        <label class="form-label" for="reset-password-new">Fjalëkalimi i ri</label>
+        <div class="password-field">
+          <input class="form-control" id="reset-password-new" type="password" autocomplete="new-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
+          <button class="password-toggle recovery-password-toggle" type="button" data-password-target="reset-password-new" aria-label="Shfaq fjalëkalimin"><i data-lucide="eye" aria-hidden="true"></i></button>
+        </div>
+        <label class="form-label" for="reset-password-confirm">Konfirmo fjalëkalimin</label>
+        <div class="password-field">
+          <input class="form-control" id="reset-password-confirm" type="password" autocomplete="new-password" placeholder="Përsërite fjalëkalimin" minlength="6" required>
+          <button class="password-toggle recovery-password-toggle" type="button" data-password-target="reset-password-confirm" aria-label="Shfaq fjalëkalimin"><i data-lucide="eye" aria-hidden="true"></i></button>
+        </div>
+        <button class="btn btn-primary auth-submit-btn" id="reset-password-submit" type="submit"><span class="auth-submit-label">Ruaj fjalëkalimin</span><span class="auth-submit-spinner" aria-hidden="true"></span></button>
+      </form>
+      <p class="auth-feedback" id="reset-password-feedback" role="alert"></p>
     </div>
   </section>
 
