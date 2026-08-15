@@ -20,8 +20,8 @@ const SETTINGS_KEYS = {
 };
 
 const appSettings = {
-  // Light Mode is the default; Dark Mode is valid only after explicit selection.
-  theme: localStorage.getItem(SETTINGS_KEYS.theme) === 'dark' ? 'dark' : 'light',
+  // The public Landing/Login experience is always Light Mode until a user logs in.
+  theme: 'light',
   currency: localStorage.getItem(SETTINGS_KEYS.currency) || 'lek'
 };
 
@@ -146,7 +146,8 @@ async function setupAuth() {
 async function handleAuthSession(session) {
   currentUser = session?.user || null;
   db.setUser(currentUser);
-  // Re-apply the explicitly saved theme after every auth state change.
+  loadUserTheme();
+  // Apply the saved theme only after the authenticated user is known.
   applySettings();
   authReady = true;
   const authPage = document.getElementById('auth-page');
@@ -174,6 +175,9 @@ function setupLandingHandlers() {
 }
 
 function showLandingPage() {
+  // Public Landing/Login pages are always Light Mode.
+  appSettings.theme = 'light';
+  applySettings();
   const landingPage = document.getElementById('landing-page');
   const authPage = document.getElementById('auth-page');
   const appShell = document.getElementById('app-shell');
@@ -259,7 +263,8 @@ async function handleLogout() {
   } finally {
     currentUser = null;
     db.setUser(null);
-    // Logout must not reset the user's saved theme preference.
+    // Keep the user's per-account preference, but show public pages in Light Mode.
+    appSettings.theme = 'light';
     applySettings();
     showLandingPage();
   }
@@ -306,11 +311,22 @@ function formatCurrency(num) {
   return `${formatNumber(num)} ${getCurrencyLabel()}`;
 }
 
+function getUserThemeKey(userId = currentUser?.id) {
+  return userId ? `${SETTINGS_KEYS.theme}:${userId}` : null;
+}
+
+function loadUserTheme() {
+  const key = getUserThemeKey();
+  appSettings.theme = key && localStorage.getItem(key) === 'dark' ? 'dark' : 'light';
+}
+
 function applySettings() {
-  document.body.classList.toggle('dark-mode', appSettings.theme === 'dark');
+  // Dark Mode is allowed only inside an authenticated user's Dashboard.
+  const shouldUseDarkMode = Boolean(currentUser) && appSettings.theme === 'dark';
+  document.body.classList.toggle('dark-mode', shouldUseDarkMode);
   const themeSelect = document.getElementById('setting-theme');
   const currencySelect = document.getElementById('setting-currency');
-  if (themeSelect) themeSelect.value = appSettings.theme;
+  if (themeSelect) themeSelect.value = shouldUseDarkMode ? 'dark' : 'light';
   if (currencySelect) currencySelect.value = appSettings.currency;
   document.documentElement.dataset.currency = appSettings.currency;
 }
@@ -320,8 +336,14 @@ function setupSettings() {
   const currencySelect = document.getElementById('setting-currency');
   if (themeSelect) {
     themeSelect.addEventListener('change', () => {
+      if (!currentUser) {
+        appSettings.theme = 'light';
+        applySettings();
+        return;
+      }
       appSettings.theme = themeSelect.value === 'dark' ? 'dark' : 'light';
-      localStorage.setItem(SETTINGS_KEYS.theme, appSettings.theme);
+      const key = getUserThemeKey();
+      if (key) localStorage.setItem(key, appSettings.theme);
       applySettings();
       showSettingsSaved();
     });
