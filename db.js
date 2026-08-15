@@ -91,7 +91,9 @@ class DBService {
     if (Array.isArray(obj)) return obj.map(item => this._toSnake(item));
     const snake = {};
     for (const key in obj) {
-      if (key === 'parts' || key === 'serviceTypes') { snake[key] = obj[key]; continue; }
+      // `serviceTypes` must become the database column `service_types`.
+      // `parts` already has the same name in both layers.
+      if (key === 'parts') { snake[key] = this._toSnake(obj[key]); continue; }
       const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
       snake[snakeKey] = this._toSnake(obj[key]);
     }
@@ -233,7 +235,12 @@ class DBService {
     if (this.isUsingSupabase()) {
       const { id, ...remoteRecord } = newRecord;
       const { data, error } = await supabaseClient.from('services').insert(this._toSnake(remoteRecord)).select().single();
-      if (error) throw error;
+      if (error) {
+        if (String(error.message || '').includes('serviceTypes') || String(error.message || '').includes('service_types') || String(error.code || '') === 'PGRST204') {
+          throw new Error('Kolona service_types mungon në tabelën services. Ekzekuto migration-in e fundit supabase-vehicle-schema-fix.sql dhe rifresko faqen.');
+        }
+        throw error;
+      }
       await this.updateVehicleMileage(record.vehicleId, newRecord.mileage);
       return this._toCamel(data);
     }
