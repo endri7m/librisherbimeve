@@ -388,6 +388,10 @@ function isRateLimitAuthError(error) {
   return message.includes('rate limit') || message.includes('too many') || message.includes('security') || message.includes('60 seconds');
 }
 
+function authRateLimitMessage(seconds = 60) {
+  return `Kemi marrë shumë tentativa. Për arsye sigurie, ju lutem prisni ${seconds} sekonda dhe provojeni përsëri.`;
+}
+
 function isEmailNotRegisteredError(error) {
   const message = String(error?.message || '').toLowerCase();
   const code = String(error?.code || '').toLowerCase();
@@ -528,12 +532,22 @@ async function handleEmailAuth(event) {
           await handleAuthSession(loginResult.data.session);
           return;
         }
+        if (isRateLimitAuthError(loginResult.error)) {
+          setAuthSubmitState(false, 60);
+          setAuthFeedback(authRateLimitMessage(60));
+          return;
+        }
         setAuthSubmitState(false, 5);
         setAuthFeedback('Ky email është i regjistruar, por fjalëkalimi është i gabuar.');
         return;
       }
 
       if (signupResult.error) {
+        if (isRateLimitAuthError(signupResult.error)) {
+          setAuthSubmitState(false, 60);
+          setAuthFeedback(authRateLimitMessage(60));
+          return;
+        }
         setAuthSubmitState(false, 5);
         setAuthFeedback(friendlyAuthError(signupResult.error));
         return;
@@ -560,15 +574,16 @@ async function handleEmailAuth(event) {
 
     const loginResult = await client.auth.signInWithPassword({ email, password });
     if (loginResult.error) {
-      setAuthSubmitState(false, 3);
-      setAuthFeedback(friendlyAuthError(loginResult.error));
+      setAuthSubmitState(false, isRateLimitAuthError(loginResult.error) ? 60 : 3);
+      setAuthFeedback(isRateLimitAuthError(loginResult.error) ? authRateLimitMessage(60) : friendlyAuthError(loginResult.error));
       return;
     }
     setAuthSubmitState(false);
     if (loginResult.data?.session) await handleAuthSession(loginResult.data.session);
   } catch (error) {
-    setAuthSubmitState(false, authMode === 'signup' ? 5 : 3);
-    setAuthFeedback(friendlyAuthError(error));
+    const isRateLimited = isRateLimitAuthError(error);
+    setAuthSubmitState(false, isRateLimited ? 60 : (authMode === 'signup' ? 5 : 3));
+    setAuthFeedback(isRateLimited ? authRateLimitMessage(60) : friendlyAuthError(error));
   }
 }
 
