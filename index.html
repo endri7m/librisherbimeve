@@ -4,14 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Libri Shërbimeve</title>
-  <link rel="stylesheet" href="style.css?v=settings-pdf-20260815b">
+  <link rel="stylesheet" href="style.css?v=auth-20260815">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env-config.js" defer></script>
+  <script src="env-config.js?v=auth-20260815"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+  <!-- ===== AUTH PAGE ===== -->
+  <section id="auth-page" class="auth-page" aria-labelledby="auth-title">
+    <div class="auth-card">
+      <div class="auth-brand-mark"><i data-lucide="wrench" style="width:28px;height:28px;color:white;"></i></div>
+      <p class="auth-eyebrow">Menaxhim profesional servisi</p>
+      <h1 id="auth-title">Libri i Shërbimeve</h1>
+      <p class="auth-subtitle" id="auth-subtitle">Hyr në panelin e servisit për të menaxhuar automjetet dhe shërbimet.</p>
+      <form id="auth-form" class="auth-form">
+        <label class="form-label" for="auth-email">Email</label>
+        <input class="form-control" id="auth-email" type="email" autocomplete="email" placeholder="emri@servisi.al" required>
+        <label class="form-label" for="auth-password">Fjalëkalimi</label>
+        <input class="form-control" id="auth-password" type="password" autocomplete="current-password" placeholder="Të paktën 6 karaktere" minlength="6" required>
+        <button class="btn btn-primary auth-submit-btn" id="auth-submit" type="submit">Hyr</button>
+      </form>
+      <button class="auth-switch-btn" id="auth-mode-switch" type="button">Nuk ke llogari? Regjistrohu</button>
+      <div class="auth-divider"><span>ose vazhdo me</span></div>
+      <div class="auth-social-grid">
+        <button class="btn btn-secondary auth-social-btn" id="auth-google" type="button"><span class="social-letter">G</span> Google</button>
+        <button class="btn btn-secondary auth-social-btn auth-social-disabled" type="button" disabled title="Apple Login do të shtohet më vonë"><span class="social-letter">●</span> Apple</button>
+      </div>
+      <p class="auth-feedback" id="auth-feedback" role="alert"></p>
+    </div>
+  </section>
 
+  <div id="app-shell" class="app-shell" style="display:none;">
   <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar">
     <div class="logo-container">
@@ -47,6 +71,13 @@
             <i data-lucide="settings" class="nav-icon"></i>
             <span>Cilësimet</span>
           </a>
+        </li>
+        <li class="sidebar-account">
+          <div class="sidebar-user" id="sidebar-user-email">—</div>
+          <button class="btn btn-secondary sidebar-logout" id="btn-logout" type="button">
+            <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+            Dil
+          </button>
         </li>
       </ul>
     </nav>
@@ -590,7 +621,8 @@
 
   <!-- Toast container -->
   <div class="toast-container" id="toast-container"></div>
+  </div>
 
-  <script type="module" src="app.js?v=settings-pdf-20260815b"></script>
+  <script type="module" src="app.js?v=auth-20260815b"></script>
 </body>
 </html>

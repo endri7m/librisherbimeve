@@ -1,6 +1,6 @@
 // app.js - Kontrolluesi kryesor i aplikacionit (Modeli i Rrafshët: Automjeti përfshin pronarin)
 
-import { db } from './db.js';
+import { db, getSupabaseClient } from './db.js';
 
 // Gjendja e aplikacionit (App State)
 const state = {
@@ -23,6 +23,10 @@ const appSettings = {
   currency: localStorage.getItem(SETTINGS_KEYS.currency) || 'lek'
 };
 
+let currentUser = null;
+let authMode = 'login';
+let authReady = false;
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp, { once: true });
 } else {
@@ -31,6 +35,7 @@ if (document.readyState === 'loading') {
 
 function initApp() {
   applySettings();
+  setupAuthHandlers();
   setupNavigation();
   setupFormHandlers();
   setupSearch();
@@ -55,12 +60,135 @@ function initApp() {
     if (state.selectedVehicleId) downloadVehicleHistoryPdf(state.selectedVehicleId);
   });
 
-  navigateTo('dashboard');
+  setupAuth();
 
   window.lucide && window.lucide.createIcons();
 
   window.openModal = openModal;
   window.closeModal = closeModal;
+}
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+function setAuthFeedback(message = '', isSuccess = false) {
+  const feedback = document.getElementById('auth-feedback');
+  if (!feedback) return;
+  feedback.textContent = message;
+  feedback.style.color = isSuccess ? 'var(--success)' : '#dc2626';
+}
+
+function setAuthMode(mode) {
+  authMode = mode === 'signup' ? 'signup' : 'login';
+  const title = document.getElementById('auth-title');
+  const subtitle = document.getElementById('auth-subtitle');
+  const submit = document.getElementById('auth-submit');
+  const switchButton = document.getElementById('auth-mode-switch');
+  const password = document.getElementById('auth-password');
+  if (title) title.textContent = authMode === 'signup' ? 'Krijo llogari' : 'Hyr në llogari';
+  if (subtitle) subtitle.textContent = authMode === 'signup' ? 'Regjistro servisin tënd dhe mbaji të dhënat private.' : 'Hyr në panelin e servisit për të menaxhuar automjetet dhe shërbimet.';
+  if (submit) submit.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr';
+  if (switchButton) switchButton.textContent = authMode === 'signup' ? 'Ke llogari? Hyr këtu' : 'Nuk ke llogari? Regjistrohu';
+  if (password) password.autocomplete = authMode === 'signup' ? 'new-password' : 'current-password';
+  setAuthFeedback('');
+}
+
+function setupAuthHandlers() {
+  const form = document.getElementById('auth-form');
+  const switchButton = document.getElementById('auth-mode-switch');
+  const googleButton = document.getElementById('auth-google');
+  const logoutButton = document.getElementById('btn-logout');
+  if (switchButton) switchButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
+  if (form) form.addEventListener('submit', handleEmailAuth);
+  if (googleButton) googleButton.addEventListener('click', handleGoogleLogin);
+  if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+}
+
+async function setupAuth() {
+  const client = getSupabaseClient();
+  if (!client) {
+    authReady = true;
+    showAuthPage('Supabase nuk është konfiguruar. Kontrollo env-config.js.');
+    return;
+  }
+  client.auth.onAuthStateChange((event, session) => {
+    setTimeout(() => handleAuthSession(session), 0);
+  });
+  const { data, error } = await client.auth.getSession();
+  if (error) {
+    console.error('Gabim gjatë leximit të sesionit:', error);
+    showAuthPage('Sesioni nuk mund të verifikohej. Provo përsëri.');
+    return;
+  }
+  await handleAuthSession(data.session);
+}
+
+async function handleAuthSession(session) {
+  currentUser = session?.user || null;
+  db.setUser(currentUser);
+  authReady = true;
+  const authPage = document.getElementById('auth-page');
+  const appShell = document.getElementById('app-shell');
+  const userEmail = document.getElementById('sidebar-user-email');
+  if (currentUser) {
+    if (authPage) authPage.style.display = 'none';
+    if (appShell) appShell.style.display = 'block';
+    if (userEmail) userEmail.textContent = currentUser.email || 'Përdorues i loguar';
+    await navigateTo('dashboard');
+    window.lucide && window.lucide.createIcons();
+  } else {
+    if (appShell) appShell.style.display = 'none';
+    showAuthPage();
+  }
+}
+
+function showAuthPage(message = '') {
+  const authPage = document.getElementById('auth-page');
+  const appShell = document.getElementById('app-shell');
+  if (authPage) authPage.style.display = 'grid';
+  if (appShell) appShell.style.display = 'none';
+  setAuthMode(authMode);
+  if (message) setAuthFeedback(message);
+  window.lucide && window.lucide.createIcons();
+}
+
+async function handleEmailAuth(event) {
+  event.preventDefault();
+  const client = getSupabaseClient();
+  if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
+  const email = document.getElementById('auth-email')?.value.trim();
+  const password = document.getElementById('auth-password')?.value;
+  const submit = document.getElementById('auth-submit');
+  if (!email || !password) return setAuthFeedback('Plotëso email-in dhe fjalëkalimin.');
+  if (submit) { submit.disabled = true; submit.textContent = authMode === 'signup' ? 'Duke krijuar...' : 'Duke hyrë...'; }
+  setAuthFeedback('');
+  const result = authMode === 'signup'
+    ? await client.auth.signUp({ email, password })
+    : await client.auth.signInWithPassword({ email, password });
+  if (submit) { submit.disabled = false; submit.textContent = authMode === 'signup' ? 'Regjistrohu' : 'Hyr'; }
+  if (result.error) return setAuthFeedback(result.error.message);
+  if (authMode === 'signup' && !result.data.session) {
+    setAuthFeedback('Llogaria u krijua. Kontrollo email-in për konfirmim.', true);
+  }
+}
+
+async function handleGoogleLogin() {
+  const client = getSupabaseClient();
+  if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
+  setAuthFeedback('Po hapim Google Login...', true);
+  const { error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) setAuthFeedback(error.message);
+}
+
+async function handleLogout() {
+  const client = getSupabaseClient();
+  if (client) await client.auth.signOut();
+  currentUser = null;
+  db.setUser(null);
+  showAuthPage();
 }
 
 // ==========================================
