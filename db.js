@@ -81,6 +81,8 @@ class DBService {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       camel[camelKey] = this._toCamel(obj[key]);
     }
+    // The database uses license_plate; the UI keeps the existing vehiclePlate name.
+    if (camel.licensePlate !== undefined && camel.vehiclePlate === undefined) camel.vehiclePlate = camel.licensePlate;
     return camel;
   }
 
@@ -137,7 +139,7 @@ class DBService {
     const record = {
       id: this._newId('veh'), userId: this.userId,
       ownerName: vehicle.ownerName.trim(), vehicleBrand: vehicle.vehicleBrand.trim(),
-      ownerPhone: (vehicle.ownerPhone || '').trim(), vehiclePlate: (vehicle.vehiclePlate || '').trim().toUpperCase(),
+      ownerPhone: (vehicle.ownerPhone || '').trim(), licensePlate: (vehicle.vehiclePlate || '').trim().toUpperCase(),
       vehicleModel: (vehicle.vehicleModel || '').trim(),       vehicleYear: vehicle.vehicleYear ? parseInt(vehicle.vehicleYear) : null,
       vehicleEngine: (vehicle.vehicleEngine || '').trim(), vehicleVin: (vehicle.vehicleVin || '').trim().toUpperCase(),
       mileage: 0, createdAt: now, updatedAt: now
@@ -163,7 +165,11 @@ class DBService {
     const changes = { ...updatedFields, updatedAt: new Date().toISOString() };
     if (changes.ownerName !== undefined) changes.ownerName = changes.ownerName.trim();
     if (changes.vehicleBrand !== undefined) changes.vehicleBrand = changes.vehicleBrand.trim();
-    if (changes.vehiclePlate !== undefined) changes.vehiclePlate = changes.vehiclePlate.trim().toUpperCase();
+    if (changes.vehiclePlate !== undefined) {
+      changes.licensePlate = changes.vehiclePlate.trim().toUpperCase();
+      delete changes.vehiclePlate;
+    }
+    if (changes.licensePlate !== undefined) changes.licensePlate = changes.licensePlate.trim().toUpperCase();
     if (changes.vehicleVin !== undefined) changes.vehicleVin = changes.vehicleVin.trim().toUpperCase();
     if (this.isUsingSupabase()) {
       const { data, error } = await supabaseClient.from('vehicles').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();

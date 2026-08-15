@@ -917,9 +917,10 @@ async function saveVehicle(e) {
 
   const ownerName = document.getElementById('veh-owner-name').value.trim();
   const vehicleBrand = document.getElementById('veh-brand').value.trim();
+  const vehiclePlate = document.getElementById('veh-plate').value.trim();
 
-  if (!ownerName || !vehicleBrand) {
-    showToast('Emri i Pronarit dhe Marka janë të detyrueshme.', 'error');
+  if (!ownerName || !vehicleBrand || !vehiclePlate) {
+    showToast('Emri i Pronarit, Marka dhe Targa janë të detyrueshme.', 'error');
     return;
   }
 
@@ -927,7 +928,7 @@ async function saveVehicle(e) {
     ownerName,
     vehicleBrand,
     ownerPhone: document.getElementById('veh-owner-phone').value.trim(),
-    vehiclePlate: document.getElementById('veh-plate').value.trim(),
+    vehiclePlate,
     vehicleModel: document.getElementById('veh-model').value.trim(),
     vehicleYear: document.getElementById('veh-year').value,
     vehicleEngine: document.getElementById('veh-engine').value.trim(),

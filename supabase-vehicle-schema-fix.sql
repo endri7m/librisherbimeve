@@ -20,6 +20,8 @@ alter table public.vehicles add column if not exists owner_name text;
 alter table public.vehicles add column if not exists owner_phone text;
 alter table public.vehicles add column if not exists vehicle_brand text;
 alter table public.vehicles add column if not exists vehicle_model text;
+alter table public.vehicles add column if not exists license_plate text;
+-- Kept for older installations; the application writes to license_plate.
 alter table public.vehicles add column if not exists vehicle_plate text;
 alter table public.vehicles add column if not exists vehicle_year integer;
 alter table public.vehicles add column if not exists vehicle_engine text;
