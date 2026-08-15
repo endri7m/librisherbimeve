@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Libri Shërbimeve</title>
-  <link rel="stylesheet" href="style.css?v=fields-20260815">
+  <link rel="stylesheet" href="style.css?v=logout-20260815">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env-config.js?v=fields-20260815"></script>
+  <script src="env-config.js?v=logout-20260815"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -115,10 +115,6 @@
         </li>
         <li class="sidebar-account">
           <div class="sidebar-user" id="sidebar-user-email">—</div>
-          <button class="btn btn-secondary sidebar-logout" id="btn-logout" type="button">
-            <i data-lucide="log-out" style="width:16px;height:16px;"></i>
-            Dil
-          </button>
         </li>
       </ul>
     </nav>
@@ -416,6 +412,22 @@
             <div class="settings-status" id="settings-save-status" role="status">Zgjedhjet ruhen automatikisht.</div>
           </div>
         </div>
+
+        <div class="card-panel settings-card settings-logout-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Llogaria</h3>
+              <p class="panel-subtitle">Dil nga llogaria dhe mbyll sesionin aktual në këtë pajisje.</p>
+            </div>
+            <i data-lucide="log-out" class="settings-card-icon"></i>
+          </div>
+          <div class="settings-card-body">
+            <button class="btn btn-danger settings-logout-button" id="settings-logout" type="button">
+              <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+              Dil nga llogaria
+            </button>
+          </div>
+        </div>
       </div>
     </section>
     <!-- ===== END SETTINGS ===== -->
@@ -664,6 +676,6 @@
   <div class="toast-container" id="toast-container"></div>
   </div>
 
-  <script type="module" src="app.js?v=fields-20260815"></script>
+  <script type="module" src="app.js?v=logout-20260815"></script>
 </body>
 </html>

@@ -1504,3 +1504,24 @@ textarea.form-control {
   width: 1.05rem;
   height: 1.05rem;
 }
+
+
+.settings-logout-card {
+  grid-column: 1 / -1;
+}
+
+.settings-logout-button {
+  min-width: 190px;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+@media (max-width: 640px) {
+  .settings-logout-card {
+    grid-column: auto;
+  }
+
+  .settings-logout-button {
+    width: 100%;
+  }
+}

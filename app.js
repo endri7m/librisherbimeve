@@ -113,10 +113,12 @@ function setupAuthHandlers() {
   const switchButton = document.getElementById('auth-mode-switch');
   const googleButton = document.getElementById('auth-google');
   const logoutButton = document.getElementById('btn-logout');
+  const settingsLogoutButton = document.getElementById('settings-logout');
   if (switchButton) switchButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
   if (form) form.addEventListener('submit', handleEmailAuth);
   if (googleButton) googleButton.addEventListener('click', handleGoogleLogin);
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+  if (settingsLogoutButton) settingsLogoutButton.addEventListener('click', handleLogout);
   setupPasswordToggle();
 }
 
@@ -243,10 +245,18 @@ async function handleGoogleLogin() {
 
 async function handleLogout() {
   const client = getSupabaseClient();
-  if (client) await client.auth.signOut();
-  currentUser = null;
-  db.setUser(null);
-  showAuthPage();
+  try {
+    if (client) {
+      const { error } = await client.auth.signOut();
+      if (error) throw error;
+    }
+  } catch (error) {
+    console.error('Gabim gjatë daljes nga llogaria:', error);
+  } finally {
+    currentUser = null;
+    db.setUser(null);
+    showLandingPage();
+  }
 }
 
 // ==========================================
