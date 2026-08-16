@@ -1431,10 +1431,11 @@ function addPartRow(part = {}, { recalculate = true } = {}) {
   const row = document.createElement('div');
   row.className = 'part-row';
   row.dataset.rowId = rowId;
+  const partPriceValue = part.price === undefined || part.price === null || part.price === '' ? '' : Number(part.price);
   row.innerHTML = `
     <input type="text" class="form-control part-name" placeholder="Emri i pjesës" value="${escapeHtml(part.name || '')}">
     <input type="number" class="form-control part-qty" placeholder="Sasia" min="1" value="${part.quantity || 1}">
-    <input type="number" class="form-control part-price" placeholder="Çmimi" min="0" step="0.01" value="${Number(part.price) || 0}">
+    <input type="number" class="form-control part-price" placeholder="Çmimi" min="0" step="0.01" value="${partPriceValue}">
     <button type="button" class="btn btn-danger btn-xs remove-part-row">&times;</button>
   `;
   row.querySelector('.remove-part-row').addEventListener('click', () => {
@@ -1443,7 +1444,7 @@ function addPartRow(part = {}, { recalculate = true } = {}) {
   });
   row.querySelectorAll('.part-qty, .part-price').forEach(input => input.addEventListener('input', calculateServiceTotal));
   container.appendChild(row);
-  if (recalculate) calculateServiceTotal();
+  if (recalculate && partPriceValue !== '') calculateServiceTotal();
 }
 
 function collectParts() {
