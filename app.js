@@ -1227,7 +1227,7 @@ async function openServiceDetails(srvId) {
       tr.innerHTML = `
         <td style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-color);font-weight:500;color:var(--text-main);">${escapeHtml(p.name)}</td>
         <td style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-color);text-align:center;font-weight:600;color:var(--text-main);">${escapeHtml(p.quantity)}</td>
-        <td style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-color);text-align:right;color:var(--text-muted);">${escapeHtml(p.description) || '-'}</td>
+        <td style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-color);text-align:right;color:var(--text-muted);">${formatCurrency(p.price)}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -1237,7 +1237,7 @@ async function openServiceDetails(srvId) {
 
   document.getElementById('detail-srv-cost-parts').innerText = formatCurrency(srv.partsCost);
   document.getElementById('detail-srv-cost-labor').innerText = formatCurrency(srv.laborCost);
-  document.getElementById('detail-srv-cost-total').innerText = formatCurrency(srv.totalCost);
+  document.getElementById('detail-srv-cost-total').innerText = formatCurrency((Number(srv.partsCost) || 0) + (Number(srv.laborCost) || 0));
 
   const notesContainer = document.getElementById('detail-srv-notes-container');
   if (srv.notes) {
@@ -1434,11 +1434,16 @@ function addPartRow(part = {}) {
   row.innerHTML = `
     <input type="text" class="form-control part-name" placeholder="Emri i pjesës" value="${escapeHtml(part.name || '')}">
     <input type="number" class="form-control part-qty" placeholder="Sasia" min="1" value="${part.quantity || 1}">
-    <input type="text" class="form-control part-desc" placeholder="Brand" value="${escapeHtml(part.description || '')}">
+    <input type="number" class="form-control part-price" placeholder="Çmimi" min="0" step="0.01" value="${Number(part.price) || 0}">
     <button type="button" class="btn btn-danger btn-xs remove-part-row">&times;</button>
   `;
-  row.querySelector('.remove-part-row').addEventListener('click', () => row.remove());
+  row.querySelector('.remove-part-row').addEventListener('click', () => {
+    row.remove();
+    calculateServiceTotal();
+  });
+  row.querySelectorAll('.part-qty, .part-price').forEach(input => input.addEventListener('input', calculateServiceTotal));
   container.appendChild(row);
+  calculateServiceTotal();
 }
 
 function collectParts() {
@@ -1450,16 +1455,21 @@ function collectParts() {
     parts.push({
       name,
       quantity: parseInt(row.querySelector('.part-qty').value) || 1,
-      description: row.querySelector('.part-desc').value.trim()
+      price: parseFloat(row.querySelector('.part-price').value) || 0
     });
   });
   return parts;
 }
 
 function calculateServiceTotal() {
-  const partsCost = parseFloat(document.getElementById('srv-cost-parts').value) || 0;
+  const parts = collectParts();
+  const partsCost = parts.reduce((sum, part) => sum + ((Number(part.price) || 0) * (Number(part.quantity) || 1)), 0);
   const laborCost = parseFloat(document.getElementById('srv-cost-labor').value) || 0;
-  document.getElementById('srv-total-display').textContent = formatCurrency(partsCost + laborCost);
+  const partsCostInput = document.getElementById('srv-cost-parts');
+  if (partsCostInput) partsCostInput.value = partsCost.toFixed(2);
+  const total = partsCost + laborCost;
+  const totalDisplay = document.getElementById('srv-total-display');
+  if (totalDisplay) totalDisplay.textContent = formatCurrency(total);
 }
 
 async function openAddServiceModal(lockedVehicleId = null) {

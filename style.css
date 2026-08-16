@@ -2038,3 +2038,35 @@ body.dark-mode th {
   border-color: #291631;
   color: #FFFFFF;
 }
+
+
+/* Service parts pricing UX */
+#srv-cost-parts {
+  background: color-mix(in srgb, var(--bg-main) 72%, white);
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: not-allowed;
+}
+
+.part-row .part-price {
+  border-color: rgba(242, 90, 29, 0.34);
+}
+
+.part-row .part-price:focus {
+  border-color: #F25A1D;
+  box-shadow: 0 0 0 3px rgba(242, 90, 29, 0.14);
+}
+
+@media (max-width: 640px) {
+  .part-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .part-row .part-name {
+    grid-column: 1 / -1;
+  }
+
+  .part-row .remove-part-row {
+    min-height: 40px;
+  }
+}

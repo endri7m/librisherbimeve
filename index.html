@@ -588,8 +588,8 @@
 
           <div class="form-group row">
             <div>
-              <label class="form-label">Kosto pjesëve</label>
-              <input type="number" class="form-control cost-input" id="srv-cost-parts" min="0" value="0">
+              <label class="form-label">Kostoja e pjesëve</label>
+              <input type="number" class="form-control cost-input" id="srv-cost-parts" min="0" value="0" readonly aria-readonly="true">
             </div>
             <div>
               <label class="form-label">Kosto punës</label>
@@ -654,7 +654,7 @@
                 <tr style="background:#f8fafc;">
                   <th style="padding:0.5rem 0.75rem;font-size:0.7rem;color:var(--text-muted);">Pjesa</th>
                   <th style="padding:0.5rem 0.75rem;text-align:center;width:60px;font-size:0.7rem;color:var(--text-muted);">Sasi</th>
-                  <th style="padding:0.5rem 0.75rem;text-align:right;font-size:0.7rem;color:var(--text-muted);">Brand</th>
+                  <th style="padding:0.5rem 0.75rem;text-align:right;font-size:0.7rem;color:var(--text-muted);">Çmimi</th>
                 </tr>
               </thead>
               <tbody id="detail-srv-parts-tbody"></tbody>
@@ -663,7 +663,7 @@
         </div>
         <div style="border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:0.75rem 0;display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1rem;">
           <div>
-            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Kosto Pjesë</span>
+            <span style="font-size:0.7rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;">Kostoja e pjesëve</span>
             <span id="detail-srv-cost-parts" style="font-weight:600;">—</span>
           </div>
           <div>
