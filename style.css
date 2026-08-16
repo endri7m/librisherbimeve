@@ -3,25 +3,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary: #0f172a;        /* Slate 900 */
-  --primary-light: #1e293b;  /* Slate 800 */
-  --accent: #2563eb;         /* Royal Blue */
-  --accent-hover: #1d4ed8;
-  --accent-light: #eff6ff;
-  --bg-main: #f8fafc;        /* Slate 50 */
-  --bg-card: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;     /* Slate 500 */
-  --text-light: #94a3b8;     /* Slate 400 */
-  --border-color: #e2e8f0;   /* Slate 200 */
-  --warning: #d97706;        /* Amber 600 */
-  --warning-light: #fef3c7;  /* Amber 100 */
-  --success: #16a34a;        /* Green 600 */
-  --success-light: #dcfce7;  /* Green 100 */
+  /* Premium automotive palette */
+  --primary: #0F1B3D;        /* Midnight Blue */
+  --primary-light: #3B2147;  /* Shadow Plum */
+  --accent: #F25A1D;         /* Glow Orange */
+  --accent-hover: #D94710;
+  --accent-light: #FFF0E9;
+  --bg-main: #E9E7E2;        /* Soft Aura White */
+  --bg-card: #E9E7E2;
+  --text-main: #0F1B3D;
+  --text-muted: #5D667A;
+  --text-light: #7F8797;
+  --border-color: #D5D2CB;
+  --warning: #C45118;
+  --warning-light: #FCE6D9;
+  --success: #187A55;
+  --success-light: #DDF3E9;
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 27, 61, 0.08);
+  --shadow-md: 0 8px 18px -8px rgba(15, 27, 61, 0.20), 0 3px 8px -4px rgba(15, 27, 61, 0.12);
+  --shadow-lg: 0 18px 40px -16px rgba(15, 27, 61, 0.28), 0 8px 16px -8px rgba(15, 27, 61, 0.16);
   
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -32,24 +33,24 @@
 }
 
 body.dark-mode {
-  --primary: #e2e8f0;
-  --primary-light: #cbd5e1;
-  --bg-main: #0f172a;
-  --bg-card: #1e293b;
-  --text-main: #e2e8f0;
-  --text-muted: #94a3b8;
-  --text-light: #64748b;
-  --border-color: #334155;
-  --accent-light: #172554;
-  --warning-light: #451a03;
-  --success-light: #052e16;
+  --primary: #E9E7E2;
+  --primary-light: #BDB9B1;
+  --bg-main: #121A34;
+  --bg-card: #1B2748;
+  --text-main: #F8F7F4;
+  --text-muted: #C5C9D3;
+  --text-light: #9EA6B8;
+  --border-color: #354365;
+  --accent-light: #542516;
+  --warning-light: #542516;
+  --success-light: #123F31;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 18px -8px rgba(0, 0, 0, 0.45), 0 3px 8px -4px rgba(0, 0, 0, 0.3);
 }
 
 body.dark-mode .sidebar {
-  --primary: #020617;
-  --primary-light: #1e293b;
+  --primary: #0F1B3D;
+  --primary-light: #3B2147;
 }
 
 body.dark-mode .panel-header,
@@ -1763,4 +1764,208 @@ body.dark-mode .landing-page .landing-orb-one {
 
 body.dark-mode .landing-page .landing-orb-two {
   background: rgba(96, 165, 250, 0.18);
+}
+
+
+/* ==========================================
+   PREMIUM AUTOMOTIVE REBRAND
+   Midnight Blue #0F1B3D · Glow Orange #F25A1D
+   Soft Aura White #E9E7E2 · Shadow Plum #3B2147
+   ========================================== */
+
+body {
+  background: var(--bg-main);
+}
+
+.sidebar {
+  background: #0F1B3D;
+  border-right-color: #3B2147;
+}
+
+.logo-icon,
+.auth-brand-mark,
+.preview-mini-logo {
+  background: #F25A1D;
+  box-shadow: 0 0 18px rgba(242, 90, 29, 0.38);
+}
+
+.nav-item a:hover {
+  background: #3B2147;
+  color: #FFFFFF;
+}
+
+.nav-item.active a {
+  background: #F25A1D;
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(242, 90, 29, 0.28);
+}
+
+.nav-divider {
+  background: rgba(233, 231, 226, 0.18);
+}
+
+.page-title h1,
+.panel-title,
+.modal-title,
+.landing-hero h1,
+.landing-feature-card h2 {
+  color: #0F1B3D;
+}
+
+.btn-primary,
+.btn-warning,
+.auth-submit-btn,
+#landing-start,
+#landing-login,
+#btn-add-vehicle,
+#btn-add-service,
+#btn-save-vehicle,
+#btn-save-service {
+  background: #F25A1D;
+  border-color: #F25A1D;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(242, 90, 29, 0.22);
+}
+
+.btn-primary:hover,
+.btn-warning:hover,
+.auth-submit-btn:hover:not(:disabled),
+#landing-start:hover,
+#landing-login:hover,
+#btn-add-vehicle:hover,
+#btn-add-service:hover,
+#btn-save-vehicle:hover,
+#btn-save-service:hover {
+  background: #D94710;
+  border-color: #D94710;
+  color: #FFFFFF;
+}
+
+.btn-secondary:hover,
+.settings-tab:hover,
+.settings-tab.active {
+  color: #F25A1D;
+}
+
+.settings-tab.active {
+  border-bottom-color: #F25A1D;
+}
+
+.form-control:focus,
+.search-input:focus,
+.settings-select:focus {
+  border-color: #F25A1D;
+  box-shadow: 0 0 0 3px rgba(242, 90, 29, 0.18);
+}
+
+.card-panel,
+.modal-window,
+.search-results,
+.auth-card,
+.landing-feature-card {
+  background: #E9E7E2;
+  border-color: #D5D2CB;
+  box-shadow: var(--shadow-md);
+}
+
+.panel-header,
+th {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.search-result-item:hover,
+.settings-option:hover {
+  background: #F3DED4;
+}
+
+.settings-card-icon,
+.feature-blue,
+.feature-amber,
+.feature-green,
+.auth-mode-switch,
+.auth-forgot-link,
+.auth-back-link {
+  color: #F25A1D;
+}
+
+.auth-page,
+.landing-page {
+  background: #E9E7E2;
+}
+
+.auth-card {
+  border-top: 4px solid #F25A1D;
+}
+
+.auth-eyebrow,
+.landing-eyebrow {
+  color: #F25A1D;
+}
+
+.preview-window-bar,
+.preview-mini-sidebar {
+  background: #0F1B3D;
+}
+
+.preview-heading {
+  background: #3B2147;
+}
+
+.preview-chart {
+  background: linear-gradient(140deg, #FFF0E9, #F3DED4);
+}
+
+.feature-blue,
+.feature-amber,
+.feature-green {
+  background: #F3DED4;
+}
+
+.table-responsive::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+  background: #3B2147;
+}
+
+.required,
+.optional,
+.text-accent {
+  color: #F25A1D;
+}
+
+body.dark-mode .page-title h1,
+body.dark-mode .panel-title,
+body.dark-mode .modal-title,
+body.dark-mode .landing-hero h1,
+body.dark-mode .landing-feature-card h2 {
+  color: #F8F7F4;
+}
+
+body.dark-mode .card-panel,
+body.dark-mode .modal-window,
+body.dark-mode .search-results,
+body.dark-mode .auth-card,
+body.dark-mode .landing-feature-card {
+  background: #1B2748;
+  border-color: #354365;
+}
+
+body.dark-mode .panel-header,
+body.dark-mode th {
+  background: #243354;
+}
+
+@media (max-width: 700px) {
+  .main-content {
+    background: #E9E7E2;
+  }
+
+  .auth-card {
+    border-top-width: 3px;
+  }
+
+  .btn-primary,
+  .btn-warning,
+  .auth-submit-btn {
+    min-height: 46px;
+  }
 }
