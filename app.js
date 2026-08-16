@@ -1425,7 +1425,7 @@ function setupPartsEditor() {
   document.getElementById('btn-add-part-row').addEventListener('click', () => addPartRow());
 }
 
-function addPartRow(part = {}) {
+function addPartRow(part = {}, { recalculate = true } = {}) {
   const container = document.getElementById('srv-parts-rows-container');
   const rowId = 'part_' + (state.partsCount++);
   const row = document.createElement('div');
@@ -1443,7 +1443,7 @@ function addPartRow(part = {}) {
   });
   row.querySelectorAll('.part-qty, .part-price').forEach(input => input.addEventListener('input', calculateServiceTotal));
   container.appendChild(row);
-  calculateServiceTotal();
+  if (recalculate) calculateServiceTotal();
 }
 
 function collectParts() {
@@ -1461,15 +1461,19 @@ function collectParts() {
   return parts;
 }
 
+function updateServiceGrandTotal() {
+  const partsCost = parseFloat(document.getElementById('srv-cost-parts')?.value) || 0;
+  const laborCost = parseFloat(document.getElementById('srv-cost-labor')?.value) || 0;
+  const totalDisplay = document.getElementById('srv-total-display');
+  if (totalDisplay) totalDisplay.textContent = formatCurrency(partsCost + laborCost);
+}
+
 function calculateServiceTotal() {
   const parts = collectParts();
-  const partsCost = parts.reduce((sum, part) => sum + ((Number(part.price) || 0) * (Number(part.quantity) || 1)), 0);
-  const laborCost = parseFloat(document.getElementById('srv-cost-labor').value) || 0;
+  const calculatedPartsCost = parts.reduce((sum, part) => sum + ((Number(part.price) || 0) * (Number(part.quantity) || 1)), 0);
   const partsCostInput = document.getElementById('srv-cost-parts');
-  if (partsCostInput) partsCostInput.value = partsCost.toFixed(2);
-  const total = partsCost + laborCost;
-  const totalDisplay = document.getElementById('srv-total-display');
-  if (totalDisplay) totalDisplay.textContent = formatCurrency(total);
+  if (partsCostInput) partsCostInput.value = calculatedPartsCost.toFixed(2);
+  updateServiceGrandTotal();
 }
 
 async function openAddServiceModal(lockedVehicleId = null) {
@@ -1523,7 +1527,10 @@ async function startEditService(id) {
   document.getElementById('srv-notes').value = srv.notes || '';
   calculateServiceTotal();
 
-  (srv.parts || []).forEach(p => addPartRow(p));
+  (srv.parts || []).forEach(p => addPartRow(p, { recalculate: false }));
+  // Preserve a previously saved manual parts-cost override when editing.
+  document.getElementById('srv-cost-parts').value = Number(srv.partsCost) || 0;
+  updateServiceGrandTotal();
 
   document.getElementById('modal-service-title').textContent = 'Modifiko Shërbimin';
   openModal('modal-service');
@@ -1594,8 +1601,8 @@ function setupFormHandlers() {
   document.getElementById('form-vehicle').addEventListener('submit', saveVehicle);
   document.getElementById('form-service').addEventListener('submit', saveService);
 
-  document.getElementById('srv-cost-parts').addEventListener('input', calculateServiceTotal);
-  document.getElementById('srv-cost-labor').addEventListener('input', calculateServiceTotal);
+  document.getElementById('srv-cost-parts').addEventListener('input', updateServiceGrandTotal);
+  document.getElementById('srv-cost-labor').addEventListener('input', updateServiceGrandTotal);
 
   document.getElementById('btn-confirm-delete-action').addEventListener('click', async () => {
     if (state.deletingType === 'vehicle') {

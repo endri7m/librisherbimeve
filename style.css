@@ -2045,7 +2045,8 @@ body.dark-mode th {
   background: color-mix(in srgb, var(--bg-main) 72%, white);
   font-weight: 700;
   color: var(--text-main);
-  cursor: not-allowed;
+  cursor: text;
+  border-color: rgba(242, 90, 29, 0.34);
 }
 
 .part-row .part-price {
