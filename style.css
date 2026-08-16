@@ -2010,3 +2010,31 @@ body.dark-mode th {
   opacity: 0.62;
   box-shadow: none;
 }
+
+
+/* Dashboard action buttons: keep vehicle and service actions distinct */
+#btn-dashboard-add-vehicle {
+  background: #F25A1D;
+  border-color: #F25A1D;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(242, 90, 29, 0.24);
+}
+
+#btn-dashboard-add-vehicle:hover {
+  background: #D94710;
+  border-color: #D94710;
+  color: #FFFFFF;
+}
+
+#btn-dashboard-add-service {
+  background: #3B2147;
+  border-color: #3B2147;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(59, 33, 71, 0.22);
+}
+
+#btn-dashboard-add-service:hover {
+  background: #291631;
+  border-color: #291631;
+  color: #FFFFFF;
+}
