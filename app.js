@@ -29,6 +29,9 @@ let currentUser = null;
 let authMode = 'login';
 let authReady = false;
 let resetRecoveryReady = false;
+let authRequestInFlight = false;
+let authSubmitCooldownTimer = null;
+const AUTH_RATE_LIMIT_COOLDOWN_SECONDS = 60;
 let forgotPasswordCooldownTimer = null;
 const FORGOT_PASSWORD_COOLDOWN_KEY = 'libri-forgot-password-cooldown-until';
 const FORGOT_PASSWORD_COOLDOWN_SECONDS = 60;
@@ -108,6 +111,10 @@ function setAuthSubmitState(isLoading, cooldownSeconds = 0) {
   const label = submit?.querySelector('.auth-submit-label');
   const spinner = submit?.querySelector('.auth-submit-spinner');
   if (!submit) return;
+  if (authSubmitCooldownTimer) {
+    window.clearInterval(authSubmitCooldownTimer);
+    authSubmitCooldownTimer = null;
+  }
   submit.disabled = isLoading || cooldownSeconds > 0;
   submit.classList.toggle('is-loading', isLoading);
   if (spinner) spinner.hidden = !isLoading;
@@ -115,14 +122,15 @@ function setAuthSubmitState(isLoading, cooldownSeconds = 0) {
   if (cooldownSeconds > 0) {
     let remaining = cooldownSeconds;
     if (label) label.textContent = `Provo përsëri pas ${remaining}s`;
-    const timer = window.setInterval(() => {
+    authSubmitCooldownTimer = window.setInterval(() => {
       remaining -= 1;
       if (!submit.isConnected || remaining <= 0) {
-        window.clearInterval(timer);
+        window.clearInterval(authSubmitCooldownTimer);
+        authSubmitCooldownTimer = null;
         setAuthSubmitState(false);
         return;
       }
-      if (label) label.textContent = `Provo përsëri pas ${remaining}s`;
+      if (label) label.textContent = `Provo prapë pas ${remaining}s`;
     }, 1000);
   }
 }
@@ -388,8 +396,8 @@ function isRateLimitAuthError(error) {
   return message.includes('rate limit') || message.includes('too many') || message.includes('security') || message.includes('60 seconds');
 }
 
-function authRateLimitMessage(seconds = 60) {
-  return `Kemi marrë shumë tentativa. Për arsye sigurie, ju lutem prisni ${seconds} sekonda dhe provojeni përsëri.`;
+function authRateLimitMessage() {
+  return 'Sistemi është i mbingarkuar për momentin. Ju lutem prisni pak sekonda dhe provojeni përsëri.';
 }
 
 function isEmailNotRegisteredError(error) {
@@ -512,12 +520,15 @@ async function handleResetPasswordSubmit(event) {
 
 async function handleEmailAuth(event) {
   event.preventDefault();
+  if (authRequestInFlight) return;
   const client = getSupabaseClient();
   if (!client) return setAuthFeedback('Supabase nuk është konfiguruar.');
   const email = document.getElementById('auth-email')?.value.trim();
   const password = document.getElementById('auth-password')?.value;
   if (!email || !password) return setAuthFeedback('Plotëso email-in dhe fjalëkalimin.');
+  authRequestInFlight = true;
   setAuthFeedback('');
+  // Disable immediately before the first network request; duplicate clicks are ignored by the guard above.
   setAuthSubmitState(true);
   try {
     if (authMode === 'signup') {
@@ -533,8 +544,8 @@ async function handleEmailAuth(event) {
           return;
         }
         if (isRateLimitAuthError(loginResult.error)) {
-          setAuthSubmitState(false, 60);
-          setAuthFeedback(authRateLimitMessage(60));
+          setAuthSubmitState(false, AUTH_RATE_LIMIT_COOLDOWN_SECONDS);
+          setAuthFeedback(authRateLimitMessage());
           return;
         }
         setAuthSubmitState(false, 5);
@@ -544,8 +555,8 @@ async function handleEmailAuth(event) {
 
       if (signupResult.error) {
         if (isRateLimitAuthError(signupResult.error)) {
-          setAuthSubmitState(false, 60);
-          setAuthFeedback(authRateLimitMessage(60));
+          setAuthSubmitState(false, AUTH_RATE_LIMIT_COOLDOWN_SECONDS);
+          setAuthFeedback(authRateLimitMessage());
           return;
         }
         setAuthSubmitState(false, 5);
@@ -574,16 +585,18 @@ async function handleEmailAuth(event) {
 
     const loginResult = await client.auth.signInWithPassword({ email, password });
     if (loginResult.error) {
-      setAuthSubmitState(false, isRateLimitAuthError(loginResult.error) ? 60 : 3);
-      setAuthFeedback(isRateLimitAuthError(loginResult.error) ? authRateLimitMessage(60) : friendlyAuthError(loginResult.error));
+      setAuthSubmitState(false, isRateLimitAuthError(loginResult.error) ? AUTH_RATE_LIMIT_COOLDOWN_SECONDS : 3);
+      setAuthFeedback(isRateLimitAuthError(loginResult.error) ? authRateLimitMessage() : friendlyAuthError(loginResult.error));
       return;
     }
     setAuthSubmitState(false);
     if (loginResult.data?.session) await handleAuthSession(loginResult.data.session);
   } catch (error) {
     const isRateLimited = isRateLimitAuthError(error);
-    setAuthSubmitState(false, isRateLimited ? 60 : (authMode === 'signup' ? 5 : 3));
-    setAuthFeedback(isRateLimited ? authRateLimitMessage(60) : friendlyAuthError(error));
+    setAuthSubmitState(false, isRateLimited ? AUTH_RATE_LIMIT_COOLDOWN_SECONDS : (authMode === 'signup' ? 5 : 3));
+    setAuthFeedback(isRateLimited ? authRateLimitMessage() : friendlyAuthError(error));
+  } finally {
+    authRequestInFlight = false;
   }
 }
 
