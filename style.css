@@ -1969,3 +1969,44 @@ body.dark-mode th {
     min-height: 46px;
   }
 }
+
+
+/* Distinct primary actions: vehicles vs services */
+#btn-add-vehicle,
+#btn-save-vehicle {
+  background: #F25A1D;
+  border-color: #F25A1D;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(242, 90, 29, 0.24);
+}
+
+#btn-add-vehicle:hover,
+#btn-save-vehicle:hover {
+  background: #D94710;
+  border-color: #D94710;
+  color: #FFFFFF;
+}
+
+#btn-add-service,
+#btn-save-service {
+  background: #3B2147;
+  border-color: #3B2147;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(59, 33, 71, 0.22);
+}
+
+#btn-add-service:hover,
+#btn-save-service:hover {
+  background: #291631;
+  border-color: #291631;
+  color: #FFFFFF;
+}
+
+/* Keep the distinction visible in disabled/loading states. */
+#btn-add-vehicle:disabled,
+#btn-save-vehicle:disabled,
+#btn-add-service:disabled,
+#btn-save-service:disabled {
+  opacity: 0.62;
+  box-shadow: none;
+}
