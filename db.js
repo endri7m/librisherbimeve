@@ -150,6 +150,7 @@ class DBService {
       // Supabase normally generates the primary key (uuid) server-side.
       // Do not send the local `veh_...` ID to a uuid column.
       const { id, ...remoteRecord } = record;
+      if (remoteRecord.licensePlate === null) delete remoteRecord.licensePlate;
       const { data, error } = await supabaseClient.from('vehicles').insert(this._toSnake(remoteRecord)).select().single();
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
