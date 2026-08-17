@@ -65,3 +65,9 @@ Mund të ekzekutosh edhe `supabase-vehicle-schema-fix.sql`, i cili tashmë përm
 ### Nëse shfaqet `relation "public.vehicles" does not exist`
 
 Në një projekt Supabase bosh, mos ekzekuto vetëm komandën `ALTER TABLE`. Ekzekuto të gjithë skedarin `supabase-license-plate-optional.sql`. Ky version krijon fillimisht tabelën `public.vehicles`, shton kolonën `license_plate`, heq kufizimin `NOT NULL` dhe e kontrollon që `is_nullable` të jetë `YES`.
+
+## 8. Rregullimi përfundimtar i `license_plate`
+
+Nëse gabimi vazhdon pas migration-it të mëparshëm, ekzekuto të gjithë skedarin `supabase-license-plate-definitive.sql`. Ky skedar krijon tabelën nëse mungon, krijon kolonën nëse mungon, heq `NOT NULL` dhe shfaq kontrollin real të PostgreSQL. Në rezultatin e fundit, kolona `license_plate` duhet të ketë `not_null = false`.
+
+Mos kopjo vetëm emrin e skedarit në SQL Editor. Duhet të kopjosh të gjithë përmbajtjen e skedarit dhe të klikosh **Run**. Nëse rezultati tregon `not_null = true`, migration-i nuk është aplikuar në projektin/tabelën e duhur.
