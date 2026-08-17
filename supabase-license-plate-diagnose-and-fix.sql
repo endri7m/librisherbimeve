@@ -17,7 +17,22 @@ where table_schema = 'public'
   and table_name = 'vehicles'
   and column_name = 'license_plate';
 
--- 3) Remove NOT NULL from the exact live column.
+-- 3) Inspect triggers and constraints that may rewrite the insert.
+select
+  trigger_name,
+  event_manipulation,
+  action_statement
+from information_schema.triggers
+where event_object_schema = 'public'
+  and event_object_table = 'vehicles';
+
+select
+  conname,
+  pg_get_constraintdef(oid) as constraint_definition
+from pg_constraint
+where conrelid = 'public.vehicles'::regclass;
+
+-- 4) Remove NOT NULL from the exact live column.
 do $$
 begin
   if to_regclass('public.vehicles') is null then
@@ -38,13 +53,13 @@ begin
     alter column license_plate drop not null;
 end $$;
 
--- 4) Normalize old empty strings.
+-- 5) Normalize old empty strings.
 update public.vehicles
 set license_plate = null
 where license_plate is not null
   and btrim(license_plate) = '';
 
--- 5) Refresh PostgREST and verify the LIVE result.
+-- 6) Refresh PostgREST and verify the LIVE result.
 notify pgrst, 'reload schema';
 
 select
@@ -61,4 +76,4 @@ where n.nspname = 'public'
   and a.attnum > 0
   and not a.attisdropped;
 
--- Expected final result: not_null = false.
+-- Expected final result: not_null = false and no trigger should insert into a different vehicles table.
