@@ -21,6 +21,9 @@ alter table public.vehicles add column if not exists owner_phone text;
 alter table public.vehicles add column if not exists vehicle_brand text;
 alter table public.vehicles add column if not exists vehicle_model text;
 alter table public.vehicles add column if not exists license_plate text;
+-- License plate is optional; empty legacy values are normalized below.
+alter table public.vehicles alter column license_plate drop not null;
+update public.vehicles set license_plate = null where license_plate is not null and btrim(license_plate) = '';
 -- Kept for older installations; the application writes to license_plate.
 alter table public.vehicles add column if not exists vehicle_plate text;
 alter table public.vehicles add column if not exists vehicle_year integer;

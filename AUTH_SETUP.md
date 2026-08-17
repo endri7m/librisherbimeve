@@ -54,3 +54,9 @@ Pa sesion, aplikacioni shfaq Login Page dhe fsheh Dashboard-in. Pas hyrjes, shfa
 ## Rregullimi i gabimit `owner_name`
 
 Nëse shfaqet gabimi `Could not find the 'owner_name' column of 'vehicles' in the schema cache`, ekzekuto skedarin `supabase-vehicle-schema-fix.sql` në **Supabase > SQL Editor**. Ky migration shton kolonat e automjeteve dhe shërbimeve që përdor aplikacioni, krijon indekset dhe dërgon komandën për rifreskimin e PostgREST schema cache. Pas ekzekutimit, rifresko browser-in me `Ctrl + F5`.
+
+## 7. Targa opsionale e automjetit
+
+Nëse shfaqet gabimi `null value in column "license_plate" of relation "vehicles" violates not-null constraint`, ekzekuto skedarin `supabase-license-plate-optional.sql` në **Supabase > SQL Editor**. Ai heq kufizimin `NOT NULL` nga `license_plate`, konverton vlerat bosh ekzistuese në `NULL` dhe rifreskon schema cache të PostgREST.
+
+Mund të ekzekutosh edhe `supabase-vehicle-schema-fix.sql`, i cili tashmë përmban të njëjtin rregullim. Pas ekzekutimit, rifresko website-in me `Ctrl + F5`.
