@@ -1442,7 +1442,7 @@ function addPartRow(part = {}, { recalculate = true } = {}) {
     row.remove();
     calculateServiceTotal();
   });
-  row.querySelectorAll('.part-qty, .part-price').forEach(input => input.addEventListener('input', calculateServiceTotal));
+  row.querySelectorAll('.part-name, .part-qty, .part-price').forEach(input => input.addEventListener('input', calculateServiceTotal));
   container.appendChild(row);
   if (recalculate && partPriceValue !== '') calculateServiceTotal();
 }
@@ -1471,7 +1471,10 @@ function updateServiceGrandTotal() {
 
 function calculateServiceTotal() {
   const parts = collectParts();
-  const calculatedPartsCost = parts.reduce((sum, part) => sum + ((Number(part.price) || 0) * (Number(part.quantity) || 1)), 0);
+  const calculatedPartsCost = parts.reduce((sum, part) => {
+    if (!part.name || !String(part.name).trim()) return sum;
+    return sum + ((Number(part.price) || 0) * (Number(part.quantity) || 1));
+  }, 0);
   const partsCostInput = document.getElementById('srv-cost-parts');
   if (partsCostInput) partsCostInput.value = calculatedPartsCost.toFixed(2);
   updateServiceGrandTotal();
