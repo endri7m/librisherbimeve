@@ -71,3 +71,9 @@ Në një projekt Supabase bosh, mos ekzekuto vetëm komandën `ALTER TABLE`. Ekz
 Nëse gabimi vazhdon pas migration-it të mëparshëm, ekzekuto të gjithë skedarin `supabase-license-plate-definitive.sql`. Ky skedar krijon tabelën nëse mungon, krijon kolonën nëse mungon, heq `NOT NULL` dhe shfaq kontrollin real të PostgreSQL. Në rezultatin e fundit, kolona `license_plate` duhet të ketë `not_null = false`.
 
 Mos kopjo vetëm emrin e skedarit në SQL Editor. Duhet të kopjosh të gjithë përmbajtjen e skedarit dhe të klikosh **Run**. Nëse rezultati tregon `not_null = true`, migration-i nuk është aplikuar në projektin/tabelën e duhur.
+
+## 9. Diagnostic për error-in persistent të targës
+
+Nëse `license_plate` vazhdon të japë `NOT NULL`, ekzekuto skedarin `supabase-license-plate-diagnose-and-fix.sql` në SQL Editor të të njëjtit projekt që përdor website-i. Ky skedar shfaq bazën aktive, kontrollon tabelën reale `public.vehicles`, heq constraint-in `NOT NULL` dhe në fund kthen `not_null = false`.
+
+Nëse shfaqet `not_null = true`, query-ja nuk është ekzekutuar në projektin e saktë ose nuk është ekzekutuar e gjithë përmbajtja. Kontrollo që URL-ja e Supabase në `env-config.js` të jetë projekti i njëjtë me Dashboard-in ku po ekzekuton SQL.
