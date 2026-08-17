@@ -60,3 +60,8 @@ Nëse shfaqet gabimi `Could not find the 'owner_name' column of 'vehicles' in th
 Nëse shfaqet gabimi `null value in column "license_plate" of relation "vehicles" violates not-null constraint`, ekzekuto skedarin `supabase-license-plate-optional.sql` në **Supabase > SQL Editor**. Ai heq kufizimin `NOT NULL` nga `license_plate`, konverton vlerat bosh ekzistuese në `NULL` dhe rifreskon schema cache të PostgREST.
 
 Mund të ekzekutosh edhe `supabase-vehicle-schema-fix.sql`, i cili tashmë përmban të njëjtin rregullim. Pas ekzekutimit, rifresko website-in me `Ctrl + F5`.
+
+
+### Nëse shfaqet `relation "public.vehicles" does not exist`
+
+Në një projekt Supabase bosh, mos ekzekuto vetëm komandën `ALTER TABLE`. Ekzekuto të gjithë skedarin `supabase-license-plate-optional.sql`. Ky version krijon fillimisht tabelën `public.vehicles`, shton kolonën `license_plate`, heq kufizimin `NOT NULL` dhe e kontrollon që `is_nullable` të jetë `YES`.
