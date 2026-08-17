@@ -141,7 +141,7 @@ class DBService {
     const record = {
       id: this._newId('veh'), userId: this.userId,
       ownerName: vehicle.ownerName.trim(), vehicleBrand: vehicle.vehicleBrand.trim(),
-      ownerPhone: (vehicle.ownerPhone || '').trim(), licensePlate: (vehicle.vehiclePlate || '').trim().toUpperCase(),
+      ownerPhone: (vehicle.ownerPhone || '').trim(), licensePlate: ((vehicle.vehiclePlate || '').trim().toUpperCase() || null),
       vehicleModel: (vehicle.vehicleModel || '').trim(),       vehicleYear: vehicle.vehicleYear ? parseInt(vehicle.vehicleYear) : null,
       vehicleEngine: (vehicle.vehicleEngine || '').trim(), vehicleVin: (vehicle.vehicleVin || '').trim().toUpperCase(),
       mileage: 0, createdAt: now, updatedAt: now
@@ -154,6 +154,9 @@ class DBService {
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
           throw new Error('Struktura e tabelës vehicles nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
+        }
+        if (String(error.code || '') === '23505' && String(error.message || '').includes('license_plate')) {
+          throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
         }
         throw error;
       }
@@ -168,14 +171,19 @@ class DBService {
     if (changes.ownerName !== undefined) changes.ownerName = changes.ownerName.trim();
     if (changes.vehicleBrand !== undefined) changes.vehicleBrand = changes.vehicleBrand.trim();
     if (changes.vehiclePlate !== undefined) {
-      changes.licensePlate = changes.vehiclePlate.trim().toUpperCase();
+      changes.licensePlate = changes.vehiclePlate.trim().toUpperCase() || null;
       delete changes.vehiclePlate;
     }
-    if (changes.licensePlate !== undefined) changes.licensePlate = changes.licensePlate.trim().toUpperCase();
+    if (changes.licensePlate !== undefined) changes.licensePlate = changes.licensePlate.trim().toUpperCase() || null;
     if (changes.vehicleVin !== undefined) changes.vehicleVin = changes.vehicleVin.trim().toUpperCase();
     if (this.isUsingSupabase()) {
       const { data, error } = await supabaseClient.from('vehicles').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
-      if (error) throw error;
+      if (error) {
+        if (String(error.code || '') === '23505' && String(error.message || '').includes('license_plate')) {
+          throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
+        }
+        throw error;
+      }
       return this._toCamel(data);
     }
     const vehicles = this._getLocal(this.vehiclesKey); const index = vehicles.findIndex(item => item.id === id && item.userId === this.userId);

@@ -1560,6 +1560,17 @@ async function saveService(e) {
     return;
   }
 
+  const invalidPricedPart = Array.from(document.querySelectorAll('#srv-parts-rows-container .part-row')).find(row => {
+    const name = row.querySelector('.part-name')?.value.trim() || '';
+    const price = row.querySelector('.part-price')?.value.trim() || '';
+    return price !== '' && !name;
+  });
+  if (invalidPricedPart) {
+    invalidPricedPart.querySelector('.part-name')?.focus();
+    showToast('Vendosni emrin e pjesës përpara se të vendosni çmimin.', 'error');
+    return;
+  }
+
   const serviceTypes = Array.from(document.querySelectorAll('#srv-categories-checkboxes input:checked')).map(cb => cb.value);
 
   const serviceData = {
