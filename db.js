@@ -234,6 +234,7 @@ class DBService {
   async getServicesByVehicle(vehicleId) { return (await this.getServices()).filter(service => service.vehicleId === vehicleId).sort((a, b) => new Date(b.serviceDate) - new Date(a.serviceDate)); }
 
   async addServiceRecord(record) {
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     this._requireUser();
     if (!record?.vehicleId) throw new Error('vehicleId është i detyrueshëm.');
     const partsCost = parseFloat(record.partsCost) || 0; const laborCost = parseFloat(record.laborCost) || 0;
@@ -245,11 +246,32 @@ class DBService {
       laborCost, partsCost, totalCost: partsCost + laborCost, notes: record.notes || '', archived: false, createdAt: now, updatedAt: now
     };
     if (this.isUsingSupabase()) {
-      const { id, ...remoteRecord } = newRecord;
-      const { data, error } = await supabaseClient.from('services').insert(this._toSnake(remoteRecord)).select().single();
+      const servicePayload = {
+        user_id: newRecord.userId,
+        vehicle_id: newRecord.vehicleId,
+        service_date: newRecord.serviceDate,
+        mileage: Number(newRecord.mileage) || 0,
+        service_types: newRecord.serviceTypes,
+        description: newRecord.description,
+        parts: newRecord.parts,
+        labor_cost: Number(newRecord.laborCost) || 0,
+        parts_cost: Number(newRecord.partsCost) || 0,
+        total_cost: Number(newRecord.totalCost) || 0,
+        notes: newRecord.notes,
+        archived: Boolean(newRecord.archived),
+        created_at: newRecord.createdAt,
+        updated_at: newRecord.updatedAt
+      };
+      let response = await supabaseClient.from('services').insert(servicePayload).select().single();
+      const schemaCacheError = (error) => String(error?.code || '') === 'PGRST205' || String(error?.code || '') === 'PGRST204' || /schema cache|Could not find the table/i.test(String(error?.message || ''));
+      if (response.error && schemaCacheError(response.error)) {
+        await wait(10000);
+        response = await supabaseClient.from('services').insert(servicePayload).select().single();
+      }
+      const { data, error } = response;
       if (error) {
-        if (String(error.message || '').includes('serviceTypes') || String(error.message || '').includes('service_types') || String(error.code || '') === 'PGRST204') {
-          throw new Error('Kolona service_types mungon në tabelën services. Ekzekuto migration-in e fundit supabase-vehicle-schema-fix.sql dhe rifresko faqen.');
+        if (String(error.message || '').includes('serviceTypes') || String(error.message || '').includes('service_types') || String(error.code || '') === 'PGRST204' || String(error.code || '') === 'PGRST205') {
+          throw new Error('Supabase nuk po e gjen tabelën public.services në schema cache. Prit 10 sekonda dhe provo përsëri.');
         }
         throw error;
       }
