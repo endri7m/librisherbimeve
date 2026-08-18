@@ -121,7 +121,7 @@ class DBService {
   async getVehicles() {
     this._requireUser();
     if (this.isUsingSupabase()) {
-      try { return await this._remoteList('vehicles'); }
+      try { return await this._remoteList('automjetet'); }
       catch (error) { console.error('Supabase getVehicles:', error); return []; }
     }
     return this._getLocal(this.vehiclesKey).filter(item => item.userId === this.userId);
@@ -145,7 +145,7 @@ class DBService {
       mileage: 0, createdAt: now, updatedAt: now
     };
     if (this.isUsingSupabase()) {
-      // Explicit payload for the current public.vehicles schema.
+      // Explicit payload for the current public.automjetet schema.
       // Only these columns are sent; optional blank fields are omitted.
       const vehiclePayload = {
         owner_name: record.ownerName,
@@ -158,10 +158,10 @@ class DBService {
       if (!vehiclePayload.vehicle_plate) delete vehiclePayload.vehicle_plate;
       if (!vehiclePayload.vehicle_model) delete vehiclePayload.vehicle_model;
       if (!vehiclePayload.owner_phone) delete vehiclePayload.owner_phone;
-      const { data, error } = await supabaseClient.from('vehicles').insert(vehiclePayload).select().single();
+      const { data, error } = await supabaseClient.from('automjetet').insert(vehiclePayload).select().single();
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
-          throw new Error('Struktura e tabelës vehicles nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
+          throw new Error('Struktura e tabelës automjetet nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
         }
         if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
@@ -181,7 +181,7 @@ class DBService {
     if (changes.vehiclePlate !== undefined) changes.vehiclePlate = changes.vehiclePlate.trim().toUpperCase() || null;
     if (changes.vehicleVin !== undefined) changes.vehicleVin = changes.vehicleVin.trim().toUpperCase();
     if (this.isUsingSupabase()) {
-      const { data, error } = await supabaseClient.from('vehicles').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
+      const { data, error } = await supabaseClient.from('automjetet').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
       if (error) {
         if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
@@ -199,7 +199,7 @@ class DBService {
     if (this.isUsingSupabase()) {
       const { error: servicesError } = await supabaseClient.from('services').delete().eq('vehicle_id', id).eq('user_id', this.userId);
       if (servicesError) throw servicesError;
-      const { error } = await supabaseClient.from('vehicles').delete().eq('id', id).eq('user_id', this.userId);
+      const { error } = await supabaseClient.from('automjetet').delete().eq('id', id).eq('user_id', this.userId);
       if (error) throw error;
       return true;
     }
@@ -212,7 +212,7 @@ class DBService {
     this._requireUser();
     const mileage = parseInt(newMileage) || 0;
     if (this.isUsingSupabase()) {
-      const { error } = await supabaseClient.from('vehicles').update({ mileage, updated_at: new Date().toISOString() }).eq('id', vehicleId).eq('user_id', this.userId);
+      const { error } = await supabaseClient.from('automjetet').update({ mileage, updated_at: new Date().toISOString() }).eq('id', vehicleId).eq('user_id', this.userId);
       if (error) throw error;
       return;
     }
