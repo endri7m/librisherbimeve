@@ -90,6 +90,19 @@ function initApp() {
 // ==========================================
 // AUTHENTICATION
 // ==========================================
+function consumePasswordResetSuccess() {
+  const message = sessionStorage.getItem('libri-reset-success-message');
+  const email = sessionStorage.getItem('libri-reset-email') || '';
+  if (message) sessionStorage.removeItem('libri-reset-success-message');
+  if (email) sessionStorage.removeItem('libri-reset-email');
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('auth')) {
+    params.delete('auth');
+    const cleanQuery = params.toString();
+    window.history.replaceState({}, document.title, `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${window.location.hash}`);
+  }
+  return { message: message || '', email };
+}
 function setAuthFeedback(message = '', isSuccess = false, actionLabel = '', actionHandler = null) {
   const feedback = document.getElementById('auth-feedback');
   if (!feedback) return;
@@ -263,7 +276,15 @@ async function handleAuthSession(session, event = '') {
     window.lucide && window.lucide.createIcons();
   } else {
     if (appShell) appShell.style.display = 'none';
-    showLandingPage();
+    const loginRequested = new URLSearchParams(window.location.search).get('auth') === 'login';
+    const resetSuccess = consumePasswordResetSuccess();
+    if (resetSuccess.message || loginRequested) {
+      showAuthPage('', 'login');
+      if (resetSuccess.email) showLoginWithEmail(resetSuccess.email);
+      if (resetSuccess.message) setAuthFeedback(resetSuccess.message, true);
+    } else {
+      showLandingPage();
+    }
   }
 }
 
