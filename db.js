@@ -6,6 +6,7 @@ let supabaseClient = null;
 
 if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase?.createClient) {
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    db: { schema: 'public' },
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -158,7 +159,7 @@ class DBService {
       if (!vehiclePayload.vehicle_plate) delete vehiclePayload.vehicle_plate;
       if (!vehiclePayload.vehicle_model) delete vehiclePayload.vehicle_model;
       if (!vehiclePayload.owner_phone) delete vehiclePayload.owner_phone;
-      const { data, error } = await supabaseClient.from('automjetet').insert(vehiclePayload).select().single();
+      const { data, error } = await supabaseClient.schema('public').from('automjetet').insert(vehiclePayload).select().single();
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
           throw new Error('Supabase nuk po e gjen tabelën automjetet në schema cache. Ekzekuto supabase-automjetet-access-and-cache.sql, prit disa sekonda dhe bëj Ctrl + Shift + R.');
@@ -181,7 +182,7 @@ class DBService {
     if (changes.vehiclePlate !== undefined) changes.vehiclePlate = changes.vehiclePlate.trim().toUpperCase() || null;
     if (changes.vehicleVin !== undefined) changes.vehicleVin = changes.vehicleVin.trim().toUpperCase();
     if (this.isUsingSupabase()) {
-      const { data, error } = await supabaseClient.from('automjetet').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
+      const { data, error } = await supabaseClient.schema('public').from('automjetet').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
       if (error) {
         if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
@@ -197,9 +198,9 @@ class DBService {
   async deleteVehicle(id) {
     this._requireUser();
     if (this.isUsingSupabase()) {
-      const { error: servicesError } = await supabaseClient.from('services').delete().eq('vehicle_id', id).eq('user_id', this.userId);
+      const { error: servicesError } = await supabaseClient.schema('public').from('services').delete().eq('vehicle_id', id).eq('user_id', this.userId);
       if (servicesError) throw servicesError;
-      const { error } = await supabaseClient.from('automjetet').delete().eq('id', id).eq('user_id', this.userId);
+      const { error } = await supabaseClient.schema('public').from('automjetet').delete().eq('id', id).eq('user_id', this.userId);
       if (error) throw error;
       return true;
     }
@@ -212,7 +213,7 @@ class DBService {
     this._requireUser();
     const mileage = parseInt(newMileage) || 0;
     if (this.isUsingSupabase()) {
-      const { error } = await supabaseClient.from('automjetet').update({ mileage, updated_at: new Date().toISOString() }).eq('id', vehicleId).eq('user_id', this.userId);
+      const { error } = await supabaseClient.schema('public').from('automjetet').update({ mileage, updated_at: new Date().toISOString() }).eq('id', vehicleId).eq('user_id', this.userId);
       if (error) throw error;
       return;
     }
@@ -262,11 +263,11 @@ class DBService {
         created_at: newRecord.createdAt,
         updated_at: newRecord.updatedAt
       };
-      let response = await supabaseClient.from('services').insert(servicePayload).select().single();
+      let response = await supabaseClient.schema('public').from('services').insert(servicePayload).select().single();
       const schemaCacheError = (error) => String(error?.code || '') === 'PGRST205' || String(error?.code || '') === 'PGRST204' || /schema cache|Could not find the table/i.test(String(error?.message || ''));
       if (response.error && schemaCacheError(response.error)) {
         await wait(10000);
-        response = await supabaseClient.from('services').insert(servicePayload).select().single();
+        response = await supabaseClient.schema('public').from('services').insert(servicePayload).select().single();
       }
       const { data, error } = response;
       if (error) {
@@ -290,7 +291,7 @@ class DBService {
     if (laborCost !== undefined) changes.laborCost = laborCost;
     if (partsCost !== undefined || laborCost !== undefined) changes.totalCost = (partsCost ?? 0) + (laborCost ?? 0);
     if (this.isUsingSupabase()) {
-      const { data, error } = await supabaseClient.from('services').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
+      const { data, error } = await supabaseClient.schema('public').from('services').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
       if (error) throw error;
       await this.recalculateVehicleMileage(data.vehicle_id);
       return this._toCamel(data);
@@ -303,7 +304,7 @@ class DBService {
     this._requireUser();
     const record = await this.getServiceById(id); if (!record) return false;
     if (this.isUsingSupabase()) {
-      const { error } = await supabaseClient.from('services').delete().eq('id', id).eq('user_id', this.userId);
+      const { error } = await supabaseClient.schema('public').from('services').delete().eq('id', id).eq('user_id', this.userId);
       if (error) throw error;
     } else {
       this._saveLocal(this.servicesKey, this._getLocal(this.servicesKey).filter(item => item.id !== id));
