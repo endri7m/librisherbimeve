@@ -81,8 +81,6 @@ class DBService {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       camel[camelKey] = this._toCamel(obj[key]);
     }
-    // The current database schema uses vehicle_plate; keep vehiclePlate in the UI layer.
-    if (camel.vehiclePlate === undefined && camel.licensePlate !== undefined) camel.vehiclePlate = camel.licensePlate;
     return camel;
   }
 
@@ -147,16 +145,25 @@ class DBService {
       mileage: 0, createdAt: now, updatedAt: now
     };
     if (this.isUsingSupabase()) {
-      // Supabase normally generates the primary key (uuid) server-side.
-      // Do not send the local `veh_...` ID to a uuid column.
-      const { id, ...remoteRecord } = record;
-      if (remoteRecord.vehiclePlate === null) delete remoteRecord.vehiclePlate;
-      const { data, error } = await supabaseClient.from('vehicles').insert(this._toSnake(remoteRecord)).select().single();
+      // Explicit payload for the current public.vehicles schema.
+      // Only these columns are sent; optional blank fields are omitted.
+      const vehiclePayload = {
+        owner_name: record.ownerName,
+        vehicle_brand: record.vehicleBrand,
+        vehicle_plate: record.vehiclePlate,
+        vehicle_model: record.vehicleModel,
+        owner_phone: record.ownerPhone,
+        user_id: record.userId
+      };
+      if (!vehiclePayload.vehicle_plate) delete vehiclePayload.vehicle_plate;
+      if (!vehiclePayload.vehicle_model) delete vehiclePayload.vehicle_model;
+      if (!vehiclePayload.owner_phone) delete vehiclePayload.owner_phone;
+      const { data, error } = await supabaseClient.from('vehicles').insert(vehiclePayload).select().single();
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
           throw new Error('Struktura e tabelës vehicles nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
         }
-        if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate') || String(error.message || '').includes('license_plate'))) {
+        if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
         }
         throw error;
@@ -172,15 +179,11 @@ class DBService {
     if (changes.ownerName !== undefined) changes.ownerName = changes.ownerName.trim();
     if (changes.vehicleBrand !== undefined) changes.vehicleBrand = changes.vehicleBrand.trim();
     if (changes.vehiclePlate !== undefined) changes.vehiclePlate = changes.vehiclePlate.trim().toUpperCase() || null;
-    if (changes.licensePlate !== undefined) {
-      changes.vehiclePlate = changes.licensePlate.trim().toUpperCase() || null;
-      delete changes.licensePlate;
-    }
     if (changes.vehicleVin !== undefined) changes.vehicleVin = changes.vehicleVin.trim().toUpperCase();
     if (this.isUsingSupabase()) {
       const { data, error } = await supabaseClient.from('vehicles').update(this._toSnake(changes)).eq('id', id).eq('user_id', this.userId).select().single();
       if (error) {
-        if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate') || String(error.message || '').includes('license_plate'))) {
+        if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');
         }
         throw error;
