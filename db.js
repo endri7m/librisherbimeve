@@ -161,7 +161,7 @@ class DBService {
       const { data, error } = await supabaseClient.from('automjetet').insert(vehiclePayload).select().single();
       if (error) {
         if (String(error.message || '').includes('owner_name') || String(error.code || '') === 'PGRST204') {
-          throw new Error('Struktura e tabelës automjetet nuk është përditësuar. Ekzekuto supabase-vehicle-schema-fix.sql në Supabase SQL Editor dhe rifresko faqen.');
+          throw new Error('Supabase nuk po e gjen tabelën automjetet në schema cache. Ekzekuto supabase-automjetet-access-and-cache.sql, prit disa sekonda dhe bëj Ctrl + Shift + R.');
         }
         if (String(error.code || '') === '23505' && (String(error.message || '').includes('vehicle_plate'))) {
           throw new Error('Kjo targë është regjistruar më parë. Vendosni një targë tjetër ose lëreni fushën bosh.');

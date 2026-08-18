@@ -77,3 +77,7 @@ Mos kopjo vetëm emrin e skedarit në SQL Editor. Duhet të kopjosh të gjithë 
 Nëse `license_plate` vazhdon të japë `NOT NULL`, ekzekuto skedarin `supabase-license-plate-diagnose-and-fix.sql` në SQL Editor të të njëjtit projekt që përdor website-i. Ky skedar shfaq bazën aktive, kontrollon tabelën reale `public.vehicles`, heq constraint-in `NOT NULL` dhe në fund kthen `not_null = false`.
 
 Nëse shfaqet `not_null = true`, query-ja nuk është ekzekutuar në projektin e saktë ose nuk është ekzekutuar e gjithë përmbajtja. Kontrollo që URL-ja e Supabase në `env-config.js` të jetë projekti i njëjtë me Dashboard-in ku po ekzekuton SQL.
+
+## 10. Tabela e re `automjetet` dhe Schema Cache
+
+Pas krijimit të tabelës së re `public.automjetet`, ekzekuto të gjithë skedarin `supabase-automjetet-access-and-cache.sql` në SQL Editor të të njëjtit projekt Supabase. Ai kontrollon ekzistencën e tabelës, jep permissions për rolet e API-së dhe dërgon `NOTIFY pgrst, 'reload schema'`. Pas ekzekutimit, prit disa sekonda dhe bëj `Ctrl + Shift + R` në website. Aplikacioni përdor `automjetet` për listim, insert, update, delete dhe përditësim të kilometrazhit.
