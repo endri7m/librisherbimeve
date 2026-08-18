@@ -213,11 +213,11 @@
         <div class="dashboard-actions">
           <button class="btn btn-primary dashboard-action-btn" id="btn-dashboard-add-vehicle">
             <i data-lucide="plus" style="width:18px;height:18px;"></i>
-            <span>Shto automjet</span>
+            <span>Shto Punë të Re</span>
           </button>
           <button class="btn btn-warning dashboard-action-btn" id="btn-dashboard-add-service">
             <i data-lucide="plus-circle" style="width:18px;height:18px;"></i>
-            <span>Regjistro shërbim</span>
+            <span>Shto Punë të Re</span>
           </button>
         </div>
       </div>
@@ -234,7 +234,7 @@
         </div>
         <button class="btn btn-primary" id="btn-add-vehicle">
           <i data-lucide="plus" style="width:16px;height:16px;"></i>
-          Shto automjet
+          Shto Punë të Re
         </button>
       </div>
 
@@ -478,6 +478,49 @@
   </main>
   <!-- ===== END MAIN CONTENT ===== -->
 
+  <!-- MODAL: UNIFIED NEW WORK WIZARD -->
+  <div class="modal-backdrop" id="modal-new-work">
+    <div class="modal-window new-work-wizard" role="dialog" aria-modal="true" aria-labelledby="new-work-title">
+      <div class="modal-header">
+        <div><p class="wizard-eyebrow">Punë e re</p><h3 class="modal-title" id="new-work-title">Shto Punë të Re</h3></div>
+        <button class="modal-close" type="button" onclick="closeModal('modal-new-work')">&times;</button>
+      </div>
+      <div class="wizard-progress" aria-label="Progresi i formularit">
+        <div class="wizard-progress-line"><span id="nw-progress-fill"></span></div>
+        <button type="button" class="wizard-step-marker active" data-wizard-step="1"><span>1</span><small>Automjeti</small></button>
+        <button type="button" class="wizard-step-marker" data-wizard-step="2"><span>2</span><small>Shërbimi</small></button>
+        <button type="button" class="wizard-step-marker" data-wizard-step="3"><span>3</span><small>Kostot</small></button>
+      </div>
+      <div class="wizard-body">
+        <section class="wizard-panel active" data-wizard-panel="1">
+          <div class="wizard-search-card">
+            <label class="form-label" for="nw-vehicle-search">Kërko Automjet Ekzistues</label>
+            <div class="wizard-search-wrap"><i data-lucide="search"></i><input class="form-control" id="nw-vehicle-search" type="search" placeholder="Kërko sipas pronarit, markës ose targës"><button type="button" class="btn btn-secondary btn-sm" id="nw-new-vehicle">Automjet i ri</button></div>
+            <div id="nw-search-results" class="wizard-search-results" hidden></div>
+            <p class="wizard-hint" id="nw-selected-vehicle-hint">Zgjidh një automjet ekzistues për të kaluar direkt te shërbimi, ose plotëso të dhënat më poshtë.</p>
+          </div>
+          <div id="nw-vehicle-fields">
+            <div class="form-group row"><div><label class="form-label" for="nw-owner">Emri i pronarit <span class="required">*</span></label><input class="form-control" id="nw-owner" required></div><div><label class="form-label" for="nw-brand">Marka <span class="required">*</span></label><input class="form-control" id="nw-brand" required></div></div>
+            <div class="form-group row"><div><label class="form-label" for="nw-plate">Targa <span class="optional">(opsionale)</span></label><input class="form-control" id="nw-plate" placeholder="p.sh. AB 123 CD"></div><div><label class="form-label" for="nw-model">Modeli <span class="optional">(opsionale)</span></label><input class="form-control" id="nw-model"></div></div>
+            <div class="form-group"><label class="form-label" for="nw-phone">Telefoni <span class="optional">(opsionale)</span></label><input class="form-control" id="nw-phone" type="tel"></div>
+          </div>
+        </section>
+        <section class="wizard-panel" data-wizard-panel="2">
+          <div class="wizard-selected-vehicle" id="nw-selected-vehicle-card"></div>
+          <div class="form-group row"><div><label class="form-label" for="nw-service-date">Data <span class="required">*</span></label><input class="form-control" id="nw-service-date" type="date" required></div><div><label class="form-label" for="nw-mileage">Kilometrazhi (km) <span class="optional">(opsionale)</span></label><input class="form-control" id="nw-mileage" type="number" min="0" placeholder="p.sh. 125000"></div></div>
+          <div class="form-group"><label class="form-label">Lloji i shërbimit <span class="required">*</span></label><div class="service-types-grid" id="nw-service-types"></div></div>
+          <div class="form-group"><label class="form-label" for="nw-description">Përshkrimi i punës <span class="optional">(opsionale)</span></label><textarea class="form-control" id="nw-description" rows="3" placeholder="Çfarë u bë..."></textarea></div>
+        </section>
+        <section class="wizard-panel" data-wizard-panel="3">
+          <div class="form-group"><label class="form-label">Pjesët e përdorura</label><div class="parts-editor-container"><div class="parts-list-rows" id="nw-parts-rows"></div><button type="button" class="btn btn-secondary btn-sm" id="nw-add-part">+ Shto pjesë</button></div></div>
+          <div class="form-group row"><div><label class="form-label">Kostoja e pjesëve</label><input class="form-control cost-input" id="nw-parts-cost" type="number" min="0" step="0.01" value="0" readonly></div><div><label class="form-label" for="nw-labor-cost">Kostoja e punës</label><input class="form-control cost-input" id="nw-labor-cost" type="number" min="0" step="0.01" value="0"></div></div>
+          <div class="wizard-total-card"><span>Totali</span><strong id="nw-total">0</strong></div>
+          <div class="wizard-summary" id="nw-summary"></div>
+        </section>
+      </div>
+      <div class="modal-footer wizard-footer"><button type="button" class="btn btn-secondary" id="nw-back">Prapa</button><div><button type="button" class="btn btn-secondary" onclick="closeModal('modal-new-work')">Anulo</button><button type="button" class="btn btn-primary" id="nw-next">Vazhdo</button><button type="button" class="btn btn-warning" id="nw-save" hidden>Ruaj Punën</button></div></div>
+    </div>
+  </div>
   <!-- MODAL: ADD/EDIT VEHICLE -->
   <div class="modal-backdrop" id="modal-vehicle">
     <div class="modal-window">

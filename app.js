@@ -59,15 +59,16 @@ function initApp() {
   setupFormHandlers();
   setupSearch();
   setupPartsEditor();
+  setupNewWorkWizard();
   setupSettings();
   calculateServiceTotal();
 
-  document.getElementById('btn-add-vehicle').addEventListener('click', () => openAddVehicleModal());
-  document.getElementById('btn-add-service').addEventListener('click', () => openAddServiceModal());
-  document.getElementById('btn-dashboard-add-vehicle').addEventListener('click', () => openAddVehicleModal());
-  document.getElementById('btn-dashboard-add-service').addEventListener('click', () => openAddServiceModal());
+  document.getElementById('btn-add-vehicle').addEventListener('click', () => openNewWorkWizard());
+  document.getElementById('btn-add-service').addEventListener('click', () => openNewWorkWizard());
+  document.getElementById('btn-dashboard-add-vehicle').addEventListener('click', () => openNewWorkWizard());
+  document.getElementById('btn-dashboard-add-service').addEventListener('click', () => openNewWorkWizard());
   document.getElementById('btn-profile-add-service').addEventListener('click', () => {
-    openAddServiceModal(state.selectedVehicleId);
+    openNewWorkWizard(state.selectedVehicleId);
   });
   document.getElementById('btn-profile-edit-vehicle').addEventListener('click', () => {
     if (state.selectedVehicleId) startEditVehicle(state.selectedVehicleId);
@@ -918,7 +919,7 @@ async function renderVehicles() {
       </tr>
     `;
     const emptyBtn = document.getElementById('empty-add-vehicle-btn');
-    if (emptyBtn) emptyBtn.addEventListener('click', () => openAddVehicleModal());
+    if (emptyBtn) emptyBtn.addEventListener('click', () => openNewWorkWizard());
     window.lucide && window.lucide.createIcons();
     return;
   }
@@ -1499,6 +1500,173 @@ function calculateServiceTotal() {
   const partsCostInput = document.getElementById('srv-cost-parts');
   if (partsCostInput) partsCostInput.value = calculatedPartsCost.toFixed(2);
   updateServiceGrandTotal();
+}
+
+let newWorkWizardState = { step: 1, existingVehicle: null, lockedVehicleId: null };
+
+function nwValue(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function nwSet(id, value) { const el = document.getElementById(id); if (el) el.value = value ?? ''; }
+function nwMoney(value) { return formatCurrency(Number(value) || 0); }
+function nwParts() {
+  return Array.from(document.querySelectorAll('#nw-parts-rows .part-row')).map(row => ({
+    name: row.querySelector('.part-name')?.value.trim() || '',
+    quantity: parseInt(row.querySelector('.part-qty')?.value) || 1,
+    price: parseFloat(row.querySelector('.part-price')?.value) || 0
+  })).filter(part => part.name);
+}
+function nwRecalculate() {
+  const parts = nwParts();
+  const partsCost = parts.reduce((sum, part) => sum + part.quantity * part.price, 0);
+  const labor = parseFloat(nwValue('nw-labor-cost')) || 0;
+  nwSet('nw-parts-cost', partsCost.toFixed(2));
+  const total = partsCost + labor;
+  const totalEl = document.getElementById('nw-total');
+  if (totalEl) totalEl.textContent = nwMoney(total);
+  return { parts, partsCost, labor, total };
+}
+function nwAddPartRow(part = {}) {
+  const container = document.getElementById('nw-parts-rows');
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'part-row';
+  row.innerHTML = `<input class="form-control part-name" placeholder="Emri i pjesës" value="${escapeHtml(part.name || '')}"><input class="form-control part-qty" type="number" min="1" value="${part.quantity || 1}" aria-label="Sasia"><input class="form-control part-price" type="number" min="0" step="0.01" placeholder="Çmimi" value="${part.price ?? ''}" aria-label="Çmimi"><button type="button" class="btn btn-danger btn-xs nw-remove-part" aria-label="Hiq pjesën">×</button>`;
+  row.querySelectorAll('input').forEach(input => input.addEventListener('input', nwRecalculate));
+  row.querySelector('.nw-remove-part').addEventListener('click', () => { row.remove(); nwRecalculate(); });
+  container.appendChild(row);
+  nwRecalculate();
+}
+function nwRenderProgress() {
+  const step = newWorkWizardState.step;
+  document.querySelectorAll('[data-wizard-panel]').forEach(panel => panel.classList.toggle('active', Number(panel.dataset.wizardPanel) === step));
+  document.querySelectorAll('[data-wizard-step]').forEach(marker => {
+    const markerStep = Number(marker.dataset.wizardStep);
+    marker.classList.toggle('active', markerStep === step);
+    marker.classList.toggle('complete', markerStep < step);
+  });
+  const fill = document.getElementById('nw-progress-fill');
+  if (fill) fill.style.width = `${((step - 1) / 2) * 100}%`;
+  const back = document.getElementById('nw-back');
+  const next = document.getElementById('nw-next');
+  const save = document.getElementById('nw-save');
+  if (back) back.disabled = step === 1;
+  if (next) next.hidden = step === 3;
+  if (save) save.hidden = step !== 3;
+  if (step === 3) nwRenderSummary();
+  window.lucide && window.lucide.createIcons();
+}
+function nwRenderSelectedVehicle() {
+  const vehicle = newWorkWizardState.existingVehicle;
+  const card = document.getElementById('nw-selected-vehicle-card');
+  if (!card) return;
+  const title = vehicle ? [vehicle.vehicleBrand, vehicle.vehicleModel].filter(Boolean).join(' ') : [nwValue('nw-brand'), nwValue('nw-model')].filter(Boolean).join(' ');
+  const owner = vehicle?.ownerName || nwValue('nw-owner');
+  const plate = vehicle?.vehiclePlate || nwValue('nw-plate') || 'Pa targë';
+  card.innerHTML = `<div class="wizard-vehicle-icon"><i data-lucide="car-front"></i></div><div><strong>${escapeHtml(title || 'Automjet i ri')}</strong><span>${escapeHtml(owner || 'Pronari pa emër')} · ${escapeHtml(plate)}</span></div>`;
+  window.lucide && window.lucide.createIcons();
+}
+function nwRenderSummary() {
+  const summary = document.getElementById('nw-summary');
+  if (!summary) return;
+  const vehicle = newWorkWizardState.existingVehicle;
+  const costs = nwRecalculate();
+  const vehicleTitle = vehicle ? [vehicle.vehicleBrand, vehicle.vehicleModel].filter(Boolean).join(' ') : [nwValue('nw-brand'), nwValue('nw-model')].filter(Boolean).join(' ');
+  const types = Array.from(document.querySelectorAll('#nw-service-types input:checked')).map(input => input.value);
+  summary.innerHTML = `<div class="wizard-summary-title">Përmbledhje para ruajtjes</div><div class="wizard-summary-grid"><span>Automjeti</span><strong>${escapeHtml(vehicleTitle || 'Automjet i ri')}</strong><span>Pronari</span><strong>${escapeHtml(vehicle?.ownerName || nwValue('nw-owner') || '—')}</strong><span>Shërbimi</span><strong>${escapeHtml(types.join(', ') || '—')}</strong><span>Data / Km</span><strong>${escapeHtml(nwValue('nw-service-date'))} · ${escapeHtml(nwValue('nw-mileage') || '—')} km</strong><span>Totali</span><strong class="wizard-summary-total">${nwMoney(costs.total)}</strong></div>`;
+}
+function nwValidateStep(step) {
+  if (step === 1 && !newWorkWizardState.existingVehicle) {
+    if (!nwValue('nw-owner') || !nwValue('nw-brand')) { showToast('Plotëso emrin e pronarit dhe markën e automjetit.', 'error'); return false; }
+  }
+  if (step === 2) {
+    if (!nwValue('nw-service-date')) { showToast('Zgjidh datën e shërbimit.', 'error'); return false; }
+    if (!document.querySelector('#nw-service-types input:checked')) { showToast('Zgjidh të paktën një lloj shërbimi.', 'error'); return false; }
+  }
+  if (step === 3) {
+    const invalid = Array.from(document.querySelectorAll('#nw-parts-rows .part-row')).find(row => {
+      const name = row.querySelector('.part-name')?.value.trim() || '';
+      const price = row.querySelector('.part-price')?.value.trim() || '';
+      return price !== '' && !name;
+    });
+    if (invalid) { invalid.querySelector('.part-name')?.focus(); showToast('Vendos emrin e pjesës përpara çmimit.', 'error'); return false; }
+  }
+  return true;
+}
+async function nwSearchVehicles() {
+  const query = nwValue('nw-vehicle-search');
+  const resultsEl = document.getElementById('nw-search-results');
+  if (!resultsEl) return;
+  if (!query) { resultsEl.hidden = true; resultsEl.innerHTML = ''; return; }
+  const results = await db.searchAll(query);
+  resultsEl.innerHTML = results.length ? results.slice(0, 6).map(result => `<button type="button" class="wizard-search-result" data-vehicle-id="${escapeHtml(result.id)}"><strong>${escapeHtml(result.title)}</strong><span>${escapeHtml(result.owner)} · ${escapeHtml(result.subtitle || 'Pa targë')}</span></button>`).join('') : '<div class="wizard-no-results">Nuk u gjet automjet. Zgjidh “Automjet i ri” për ta krijuar.</div>';
+  resultsEl.hidden = false;
+  resultsEl.querySelectorAll('[data-vehicle-id]').forEach(button => button.addEventListener('click', async () => {
+    newWorkWizardState.existingVehicle = await db.getVehicleById(button.dataset.vehicleId);
+    newWorkWizardState.step = 2;
+    document.getElementById('nw-vehicle-fields').hidden = true;
+    document.getElementById('nw-selected-vehicle-hint').textContent = 'Automjeti u zgjodh. Po kalojmë te detajet e shërbimit.';
+    resultsEl.hidden = true;
+    nwRenderSelectedVehicle();
+    nwRenderProgress();
+  }));
+}
+async function openNewWorkWizard(lockedVehicleId = null) {
+  newWorkWizardState = { step: lockedVehicleId ? 2 : 1, existingVehicle: lockedVehicleId ? await db.getVehicleById(lockedVehicleId) : null, lockedVehicleId };
+  ['nw-owner', 'nw-brand', 'nw-plate', 'nw-model', 'nw-phone', 'nw-mileage', 'nw-description', 'nw-vehicle-search', 'nw-labor-cost'].forEach(id => nwSet(id, ''));
+  nwSet('nw-service-date', new Date().toISOString().split('T')[0]);
+  nwSet('nw-parts-cost', '0');
+  document.getElementById('nw-parts-rows').innerHTML = '';
+  document.getElementById('nw-search-results').hidden = true;
+  document.getElementById('nw-vehicle-fields').hidden = Boolean(newWorkWizardState.existingVehicle);
+  document.getElementById('nw-selected-vehicle-hint').textContent = newWorkWizardState.existingVehicle ? 'Automjeti ekzistues u zgjodh nga profili.' : 'Zgjidh një automjet ekzistues ose krijo një të ri.';
+  const types = await db.getActiveCategories();
+  document.getElementById('nw-service-types').innerHTML = types.map(category => `<label class="service-type-chip"><input type="checkbox" value="${escapeHtml(category.name)}"><span>${escapeHtml(category.name)}</span></label>`).join('');
+  nwRenderSelectedVehicle();
+  nwRenderProgress();
+  openModal('modal-new-work');
+}
+async function saveNewWork() {
+  if (!nwValidateStep(3)) return;
+  const saveButton = document.getElementById('nw-save');
+  saveButton.disabled = true; saveButton.textContent = 'Po ruhet...';
+  let createdVehicle = null;
+  try {
+    let vehicle = newWorkWizardState.existingVehicle;
+    if (!vehicle) {
+      vehicle = await db.addVehicle({ ownerName: nwValue('nw-owner'), vehicleBrand: nwValue('nw-brand'), vehiclePlate: nwValue('nw-plate'), vehicleModel: nwValue('nw-model'), ownerPhone: nwValue('nw-phone') });
+      createdVehicle = vehicle;
+    }
+    const costs = nwRecalculate();
+    const service = await db.addServiceRecord({ vehicleId: vehicle.id, serviceDate: nwValue('nw-service-date'), mileage: nwValue('nw-mileage'), serviceTypes: Array.from(document.querySelectorAll('#nw-service-types input:checked')).map(input => input.value), description: nwValue('nw-description'), parts: costs.parts, partsCost: costs.partsCost, laborCost: costs.labor, totalCost: costs.total });
+    closeModal('modal-new-work');
+    showToast(`Puna u ruajt: ${vehicle.vehicleBrand || 'Automjet'} · ${formatCurrency(service.totalCost)}`, 'success');
+    await updateDashboardStats();
+    if (state.currentView === 'vehicles') await renderVehicles();
+    if (state.currentView === 'services') await renderServices();
+    if (state.currentView === 'vehicle-profile') await renderVehicleProfile(vehicle.id);
+  } catch (error) {
+    console.error('Save new work:', error);
+    if (createdVehicle?.id) {
+      try { await db.deleteVehicle(createdVehicle.id); } catch (rollbackError) { console.error('Rollback new vehicle:', rollbackError); }
+    }
+    showToast(error.message || 'Puna nuk u ruajt. Provo përsëri.', 'error');
+  } finally {
+    saveButton.disabled = false; saveButton.textContent = 'Ruaj Punën';
+  }
+}
+function setupNewWorkWizard() {
+  document.getElementById('nw-vehicle-search')?.addEventListener('input', nwSearchVehicles);
+  document.getElementById('nw-new-vehicle')?.addEventListener('click', () => {
+    newWorkWizardState.existingVehicle = null; newWorkWizardState.step = 1;
+    document.getElementById('nw-vehicle-fields').hidden = false;
+    document.getElementById('nw-selected-vehicle-hint').textContent = 'Plotëso të dhënat e automjetit të ri.';
+    nwRenderProgress();
+  });
+  document.getElementById('nw-add-part')?.addEventListener('click', () => nwAddPartRow());
+  document.getElementById('nw-labor-cost')?.addEventListener('input', nwRecalculate);
+  document.getElementById('nw-back')?.addEventListener('click', () => { if (newWorkWizardState.step > 1) { newWorkWizardState.step -= 1; nwRenderProgress(); } });
+  document.getElementById('nw-next')?.addEventListener('click', () => { if (!nwValidateStep(newWorkWizardState.step)) return; newWorkWizardState.step += 1; nwRenderSelectedVehicle(); nwRenderProgress(); });
+  document.getElementById('nw-save')?.addEventListener('click', saveNewWork);
+  document.querySelectorAll('[data-wizard-step]').forEach(marker => marker.addEventListener('click', () => { const target = Number(marker.dataset.wizardStep); if (target < newWorkWizardState.step) { newWorkWizardState.step = target; nwRenderProgress(); } }));
 }
 
 async function openAddServiceModal(lockedVehicleId = null) {
